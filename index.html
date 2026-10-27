@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GlamWar Maquillaje - Tienda & Panel Administrador</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Playfair Display', Georgia, serif;
+      background-color: #fdfbf7; color: #2c2c2c;
+      overflow-x: hidden; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+      padding: 1.5rem; position: relative;
+    }
+    @keyframes slowAppear { 0% { opacity: 0; transform: scale(0.98); filter: blur(2px); } 100% { opacity: 1; transform: scale(1); filter: blur(0px); } }
+    .animate-slow-appear { animation: slowAppear 0.25s ease-out forwards; }
+    .neon-logo-container {
+      width: 12rem; height: 12rem; border-radius: 50%; background: #ffffff;
+      box-shadow: 0 0 25px rgba(255,255,255,0.9), 0 0 50px #ff69b4, 0 0 90px #ff1493, 0 0 130px rgba(255,105,180,0.5);
+      animation: neonPulse 3s infinite alternate ease-in-out;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; overflow: hidden; position: relative; padding: 0.375rem; transition: transform 0.3s ease;
+      will-change: transform;
+    }
+    .neon-logo-container:hover { transform: scale(1.03); }
+    @keyframes neonPulse {
+      0% { box-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 40px #ff69b4, 0 0 80px #ff1493, 0 0 120px rgba(255,105,180,0.4); }
+      100% { box-shadow: 0 0 30px rgba(255,255,255,1), 0 0 60px #ff1493, 0 0 110px #ff69b4, 0 0 160px rgba(255,20,147,0.7); }
+    }
+    .logo-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; transform: scale(1.5); }
+    .bg-glow { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; background: radial-gradient(circle at center, rgba(255,182,193,0.25) 0%, rgba(253,251,247,1) 75%); }
+    main, .section-view, .product-detail-view, .auth-container, .admin-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; max-width: 42rem; z-index: 10; text-align: center; margin: 0 auto; }
+    .hidden { display: none !important; }
+    h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem; color: #111827; }
+    .subtitle { font-family: system-ui, -apple-system, sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.25em; color: #db2777; margin-bottom: 1.25rem; font-weight: 600; }
+    .top-nav-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; z-index: 30; font-family: system-ui, -apple-system, sans-serif; }
+    .menu-btn { background: #ffffff; border: 1px solid #fbcfe8; padding: 0.5rem 0.75rem; border-radius: 0.5rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; color: #db2777; font-weight: 600; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(236,72,153,0.1); }
+    .menu-btn:hover { background: #fdf2f8; }
+    .admin-badge-tag { background: #7c3aed; color: white; font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-weight: 700; text-transform: uppercase; }
+    .sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: #ffffff; box-shadow: 5px 0 15px rgba(0,0,0,0.1); z-index: 100; transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; font-family: system-ui, -apple-system, sans-serif; text-align: left; }
+    .sidebar.open { left: 0; }
+    .sidebar-header { padding: 1.25rem; background: linear-gradient(to right, #fdf2f8, #fce7f3); border-bottom: 1px solid #fbcfe8; display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-header h3 { font-size: 1rem; color: #be185d; }
+    .close-sidebar { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6b7280; }
+    .sidebar-content { padding: 1rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.25rem; }
+    .sidebar-section h4 { font-size: 0.85rem; color: #374151; margin-bottom: 0.5rem; border-bottom: 1px solid #f3e8ff; padding-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .brand-nav-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .brand-nav-item { padding: 0.5rem 0.75rem; background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 0.5rem; color: #be185d; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: background 0.2s; }
+    .brand-nav-item:hover { background: #fce7f3; }
+    .cart-items-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; overflow-y: auto; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; background: #fdf2f8; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #fbcfe8; }
+    .cart-item-info { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; }
+    .cart-item-title { font-weight: 600; color: #1f2937; }
+    .cart-item-price { color: #db2777; font-weight: 700; }
+    .cart-qty-controls { display: flex; align-items: center; gap: 0.3rem; margin-right: 0.5rem; }
+    .cart-qty-btn { background: #ffffff; border: 1px solid #f472b6; color: #db2777; font-weight: 700; width: 22px; height: 22px; border-radius: 0.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
+    .cart-qty-btn:hover { background: #fce7f3; }
+    .remove-cart-item { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.85rem; padding: 0.2rem; }
+    .cart-total { font-size: 0.85rem; font-weight: 700; display: flex; justify-content: space-between; margin-top: 0.5rem; color: #111827; border-top: 1px dashed #d1d5db; padding-top: 0.5rem; }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid #f3e8ff; background: #fafaf9; }
+    .sidebar-logout { width: 100%; background: #ef4444; color: white; border: none; padding: 0.6rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
+    .sidebar-logout:hover { background: #dc2626; }
+    .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 90; display: none; }
+    .sidebar-overlay.active { display: block; }
+    .search-container { width: 100%; margin-bottom: 1.25rem; font-family: system-ui, -apple-system, sans-serif; position: relative; }
+    .search-input { width: 100%; padding: 0.75rem 1rem; border: 1px solid #f472b6; border-radius: 0.75rem; font-size: 0.85rem; outline: none; background: #ffffff; box-shadow: 0 2px 5px rgba(236,72,153,0.05); transition: all 0.2s; }
+    .search-input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219,39,119,0.1); }
+    .suggestions-box { position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #fbcfe8; border-radius: 0.75rem; margin-top: 0.3rem; max-height: 200px; overflow-y: auto; z-index: 50; box-shadow: 0 10px 15px -3px rgba(236,72,153,0.1); display: none; text-align: left; }
+    .suggestion-item { padding: 0.6rem 1rem; font-size: 0.8rem; color: #374151; border-bottom: 1px solid #fdf2f8; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .suggestion-item:hover { background: #fdf2f8; color: #db2777; }
+    .suggestion-brand { font-size: 0.7rem; background: #fce7f3; color: #be185d; padding: 0.1rem 0.4rem; border-radius: 0.3rem; font-weight: 600; }
+    .info-card { font-family: system-ui, -apple-system, sans-serif; background-color: rgba(255,255,255,0.9); border: 1px solid #fbcfe8; border-radius: 1rem; padding: 0.875rem; margin-bottom: 1.25rem; width: 100%; box-shadow: 0 10px 15px -3px rgba(236,72,153,0.05); }
+    .info-row, .info-subrow { display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.8rem; color: #374151; margin-bottom: 0.2rem; }
+    .info-subrow { font-size: 0.75rem; color: #6b7280; }
+    .icon { width: 1rem; height: 1rem; color: #ec4899; }
+    .auth-form { font-family: system-ui, -apple-system, sans-serif; background: #ffffff; border: 1px solid #fbcfe8; border-radius: 1rem; padding: 1.5rem; width: 100%; box-shadow: 0 10px 15px -3px rgba(236,72,153,0.05); display: flex; flex-direction: column; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; text-align: left; gap: 0.3rem; }
+    .form-group label { font-size: 0.8rem; font-weight: 600; color: #374151; }
+    .form-group input { padding: 0.75rem; border: 1px solid #f472b6; border-radius: 0.5rem; font-size: 0.9rem; outline: none; }
+    .form-group input:focus { border-color: #db2777; box-shadow: 0 0 0 3px rgba(219,39,119,0.1); }
+    .auth-btn { background: linear-gradient(to right, #ec4899, #db2777); color: #ffffff; font-weight: 600; padding: 0.75rem; border-radius: 0.75rem; border: none; cursor: pointer; font-size: 0.9rem; transition: opacity 0.2s; margin-top: 0.5rem; }
+    .auth-btn:hover { opacity: 0.9; }
+    .btn-guest { background: #ffffff; border: 1px solid #f472b6; color: #db2777; font-weight: 600; padding: 0.6rem; border-radius: 0.75rem; cursor: pointer; font-size: 0.85rem; }
+    .btn-guest:hover { background: #fdf2f8; }
+    .switch-auth { font-size: 0.8rem; color: #6b7280; margin-top: 0.2rem; }
+    .switch-auth a { color: #db2777; font-weight: 600; text-decoration: none; cursor: pointer; }
+    .switch-auth a:hover { text-decoration: underline; }
+    .error-msg { color: #dc2626; font-size: 0.75rem; min-height: 1rem; }
+    .buttons-container { font-family: system-ui, -apple-system, sans-serif; width: 100%; display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1rem; }
+    .btn-whatsapp, .btn-instagram, .btn-tiktok, .btn-back { width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.75rem; font-weight: 600; padding: 0.75rem 1rem; border-radius: 0.75rem; text-decoration: none; font-size: 0.85rem; cursor: pointer; }
+    .btn-whatsapp { background: linear-gradient(to right, #ec4899, #db2777); color: #ffffff; border: none; }
+    .btn-instagram { background-color: #ffffff; border: 1px solid #f472b6; color: #1f2937; }
+    .btn-tiktok { background-color: #ffffff; border: 1px solid #f472b6; color: #1f2937; }
+    .btn-back { background-color: #374151; color: #ffffff; margin-top: 1.5rem; margin-bottom: 2rem; border: none; }
+    .products-container { width: 100%; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; text-align: left; font-family: system-ui, -apple-system, sans-serif; }
+    .product-card { background: #ffffff; border: 1px solid #fbcfe8; border-radius: 1rem; padding: 0.75rem; box-shadow: 0 4px 10px rgba(236,72,153,0.06); display: flex; flex-direction: column; justify-content: space-between; gap: 0.5rem; transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; position: relative; will-change: transform; }
+    .product-card:hover { border-color: #db2777; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(236,72,153,0.15); }
+    .product-card-top { display: flex; flex-direction: column; gap: 0.4rem; }
+    .product-card-bottom { display: flex; flex-direction: column; gap: 0.4rem; margin-top: auto; }
+    .product-img { width: 100%; height: 130px; object-fit: contain; background-color: #fffdfd; border-radius: 0.5rem; border: 1px solid #f3e8ff; padding: 0.25rem; }
+    .product-header { display: flex; flex-direction: column; gap: 0.1rem; }
+    .product-title { font-size: 0.8rem; font-weight: 700; color: #111827; line-height: 1.15; }
+    .product-price { font-size: 0.85rem; font-weight: 800; color: #db2777; }
+    .add-to-cart-btn { background: #fdf2f8; border: 1px solid #f472b6; color: #be185d; padding: 0.4rem 0.5rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.7rem; cursor: pointer; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.2rem; }
+    .add-to-cart-btn:hover { background: #db2777; color: #ffffff; }
+    .add-to-cart-btn:disabled { background: #e5e7eb !important; border-color: #d1d5db !important; color: #9ca3af !important; cursor: not-allowed !important; }
+    .shades-title { font-size: 0.65rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+    .shades-list { display: flex; flex-wrap: wrap; gap: 0.25rem; max-height: 110px; overflow-y: auto; }
+    .shade-item { font-size: 0.65rem; padding: 0.2rem 0.4rem; border-radius: 0.3rem; background-color: #f9fafb; border: 1px solid #e5e7eb; color: #374151; display: inline-flex; align-items: center; gap: 0.2rem; cursor: pointer; user-select: none; }
+    .shade-item.selected { background-color: #db2777 !important; color: #ffffff !important; border-color: #be185d !important; font-weight: 600; }
+    .shade-sold { background-color: #fef2f2 !important; border-color: #fca5a5 !important; color: #991b1b !important; opacity: 0.7; cursor: not-allowed !important; }
+    .badge-sold-tag { font-size: 0.5rem; background: #dc2626; color: white; padding: 0.05rem 0.2rem; border-radius: 2px; font-weight: 700; text-decoration: none !important; display: inline-block; }
+    
+    /* CONTROL DE CANTIDAD EN DETALLE DE PRODUCTO */
+    .quantity-selector-box { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; background: #fdf2f8; padding: 0.4rem 0.6rem; border-radius: 0.5rem; border: 1px solid #fbcfe8; width: fit-content; }
+    .quantity-selector-box label { font-size: 0.75rem; font-weight: 700; color: #374151; }
+    .qty-btn { background: #ffffff; border: 1px solid #f472b6; color: #db2777; font-weight: 800; width: 28px; height: 28px; border-radius: 0.4rem; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; }
+    .qty-btn:hover { background: #fce7f3; }
+    .qty-number { font-size: 0.85rem; font-weight: 800; color: #be185d; min-width: 20px; text-align: center; }
+
+    @media (min-width: 760px) {
+      .product-detail-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 1.5rem; padding: 1.5rem; }
+      .detail-main-img { height: min(52vw, 460px); }
+      .detail-title { font-size: 1.65rem; }
+      .detail-price { font-size: 1.7rem; }
+      .detail-info { position: sticky; top: 1rem; }
+    }
+    .product-detail-card { background: #ffffff; border: 1px solid #fbcfe8; border-radius: 1rem; padding: 1.25rem; width: 100%; box-shadow: 0 10px 25px rgba(236,72,153,0.08); font-family: system-ui, -apple-system, sans-serif; text-align: left; display: flex; flex-direction: column; gap: 1rem; }
+    .detail-gallery { display: flex; flex-direction: column; gap: 0.5rem; align-items: center; width: 100%; }
+    .detail-main-img { width: 100%; height: 220px; object-fit: contain; background: #fffdfd; border: 1px solid #f3e8ff; border-radius: 0.75rem; padding: 0.5rem; }
+    .detail-thumbs { display: flex; gap: 0.5rem; overflow-x: auto; width: 100%; padding: 0.4rem 0.2rem; min-height: 65px; background: #fdf2f8; border-radius: 0.5rem; border: 1px dashed #fbcfe8; align-items: center; }
+    .detail-thumb { width: 55px; height: 55px; object-fit: contain; background: #ffffff; border: 1.5px solid #fbcfe8; border-radius: 0.4rem; cursor: pointer; padding: 0.15rem; flex-shrink: 0; transition: transform 0.2s, border-color 0.2s; }
+    .detail-thumb:hover { transform: scale(1.05); }
+    .detail-thumb.active-thumb { border-color: #db2777; box-shadow: 0 0 6px rgba(219,39,119,0.5); }
+    .detail-info { display: flex; flex-direction: column; gap: 0.5rem; }
+    .detail-title { font-size: 1.1rem; font-weight: 700; color: #111827; font-family: 'Playfair Display', Georgia, serif; }
+    .detail-price { font-size: 1.25rem; font-weight: 800; color: #db2777; }
+    .detail-desc { font-size: 0.9rem; color: #4b5563; line-height: 1.6; background: #fdf2f8; padding: 0.8rem; border-radius: 0.5rem; border: 1px solid #fce7f3; white-space: normal; }
+    .detail-features { margin: .25rem 0; padding: .8rem 1rem; border: 1px solid #f3e8ff; border-radius: .6rem; color: #374151; font-size: .88rem; line-height: 1.6; }
+    .detail-stock { font-size: .8rem; color: #047857; font-weight: 700; margin-top: .15rem; }
+    .detail-stock.out { color: #b91c1c; }
+    .detail-shades-title { font-size: 0.75rem; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.5rem; }
+    .detail-shades-container { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .detail-shade-item { font-size: 0.75rem; padding: 0.35rem 0.7rem; border-radius: 0.4rem; background-color: #f9fafb; border: 1px solid #e5e7eb; color: #374151; cursor: pointer; }
+    .detail-shade-item.selected { background-color: #db2777 !important; color: #ffffff !important; border-color: #be185d !important; font-weight: 600; }
+    .detail-actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
+    .btn-order-now { background: linear-gradient(to right, #22c55e, #16a34a); color: #ffffff; font-weight: 600; padding: 0.75rem; border-radius: 0.75rem; border: none; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 10px rgba(34,197,94,0.3); }
+    .btn-add-detail { background: linear-gradient(to right, #ec4899, #db2777); color: #ffffff; font-weight: 600; padding: 0.75rem; border-radius: 0.75rem; border: none; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 10px rgba(236,72,153,0.3); }
+    .admin-dashboard-view { width: 100%; background: #ffffff; border: 2px solid #7c3aed; border-radius: 1rem; padding: 1.25rem; box-shadow: 0 10px 20px rgba(124,58,237,0.1); font-family: system-ui, -apple-system, sans-serif; text-align: left; }
+    .admin-dashboard-view h2 { color: #6d28d9; font-size: 1.2rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .admin-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.25rem; }
+    .stat-card { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 0.5rem; padding: 0.6rem; text-align: center; }
+    .stat-number { font-size: 1.1rem; font-weight: 800; color: #6d28d9; }
+    .stat-label { font-size: 0.65rem; color: #5b21b6; font-weight: 600; text-transform: uppercase; }
+    .admin-section-box { margin-bottom: 1.25rem; background: #faf5ff; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e9d5ff; }
+    .admin-section-box h4 { font-size: 0.85rem; color: #6d28d9; margin-bottom: 0.5rem; border-bottom: 1px solid #ddd6fe; padding-bottom: 0.2rem; }
+    .order-history-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; overflow-y: auto; }
+    .order-card-item { background: #ffffff; border: 1px solid #ddd6fe; border-radius: 0.4rem; padding: 0.6rem; font-size: 0.75rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    .order-header { display: flex; justify-content: space-between; font-weight: 700; color: #5b21b6; }
+    .order-date { font-size: 0.65rem; color: #9ca3af; }
+    .admin-form-group { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.6rem; }
+    .admin-form-group label { font-size: 0.75rem; font-weight: 700; color: #4c1d95; }
+    .admin-form-input, .admin-form-select { padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.4rem; font-size: 0.8rem; outline: none; }
+    .btn-save-new-prod { background: linear-gradient(to right, #7c3aed, #6d28d9); color: white; border: none; padding: 0.6rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%; font-size: 0.8rem; margin-top: 0.4rem; }
+    .btn-save-new-prod:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-save-changes { background: linear-gradient(to right, #059669, #10b981); color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 0.4rem; font-weight: 600; cursor: pointer; font-size: 0.75rem; }
+    .btn-save-changes:hover { opacity: 0.9; }
+    .btn-save-imgs { background: linear-gradient(to right, #ec4899, #db2777); color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 0.4rem; font-weight: 600; cursor: pointer; font-size: 0.75rem; }
+    .btn-add-shade-row { background: #fdf2f8; border: 1px dashed #db2777; color: #db2777; font-weight: 700; padding: 0.4rem; border-radius: 0.4rem; cursor: pointer; font-size: 0.75rem; width: 100%; margin-top: 0.3rem; }
+    .btn-add-shade-row:hover { background: #fce7f3; }
+    .shade-input-card { background: #ffffff; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.5rem; margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .shade-input-row { display: flex; gap: 0.4rem; align-items: center; }
+    .admin-prod-edit-card { background: #ffffff; border: 1px solid #ddd6fe; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.6rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.75rem; }
+    .admin-prod-edit-header { display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #4c1d95; }
+    .shade-admin-box { background: #fdf2f8; padding: 0.6rem; border-radius: 0.4rem; border: 1px solid #fbcfe8; margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .shade-admin-header { display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #be185d; }
+    .shade-img-preview { display: flex; gap: 0.3rem; overflow-x: auto; padding: 0.2rem 0; }
+    .shade-img-preview img { width: 40px; height: 40px; object-fit: cover; border-radius: 0.25rem; border: 1px solid #f472b6; }
+    .section-title-bar { width: 100%; text-align: left; font-size: 0.9rem; font-weight: 700; color: #be185d; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.4rem; }
+    .promo-banner { width: calc(100% + 3rem); max-width: 100vw; margin: -1.5rem -1.5rem 1.4rem; padding: .8rem 1rem; text-align: center; color: #27111e; background: linear-gradient(110deg, #fff7fb 0%, #fce7f3 45%, #fff 100%); border-bottom: 2px solid #f9a8d4; box-shadow: 0 5px 18px rgba(190,24,93,.09); font-family: system-ui, -apple-system, sans-serif; position: relative; overflow: hidden; }
+    .promo-banner:before { content: ''; position:absolute; inset:0 auto 0 0; width:5px; background:linear-gradient(#ec4899,#a855f7); }
+    .promo-main { font-size: clamp(.95rem, 3.5vw, 1.3rem); font-weight: 900; letter-spacing:.015em; line-height:1.35; }
+    .promo-sub { margin-top:.2rem; font-size:clamp(.7rem, 2.8vw, .9rem); font-weight:800; color:#9d174d; letter-spacing:.08em; }
+    .order-admin-actions { display:flex; gap:.4rem; margin-top:.45rem; flex-wrap:wrap; }
+    .order-admin-actions button { flex:1; min-width:120px; border:0; border-radius:.4rem; padding:.5rem; font-size:.72rem; font-weight:700; cursor:pointer; }
+    .btn-delete-order { background:#fee2e2; color:#b91c1c; border:none; border-radius:0.4rem; padding:0.4rem; cursor:pointer; font-weight:600; }
+    .cart-nav-btn { border-color:#f3b6d6 !important; background:#fff0f7 !important; color:#be185d !important; }
+    .cart-nav-btn:hover { background:#fce7f3 !important; }
+    footer { font-family: system-ui, -apple-system, sans-serif; z-index: 10; text-align: center; font-size: 10px; color: #9ca3af; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.5rem 0; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="promo-banner" role="note" aria-label="Promoción de envío y pedidos">
+    <div class="promo-main">✦ ENVÍOS A TODO MÉXICO · ENVÍO GRATIS DESDE $1,999 MXN ✦</div>
+    <div class="promo-sub">BELLEZA HASTA TU PUERTA · TU PRÓXIMO FAVORITO TE ESPERA · PEDIDOS ABIERTOS 24/7</div>
+  </div>
+
+  <div class="bg-glow"></div>
+
+  <!-- MENÚ LATERAL -->
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <h3>Menú GlamWar</h3>
+      <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+    </div>
+    <div class="sidebar-content">
+      <div class="sidebar-section">
+        <h4>Usuario Activo</h4>
+        <p id="sidebar-user-name" style="font-size: 0.85rem; color: #db2777; font-weight: 600;">Invitado</p>
+      </div>
+
+      <div id="admin-sidebar-option" class="sidebar-section hidden">
+        <h4 style="color: #7c3aed;">Panel Administrador</h4>
+        <div class="brand-nav-item" style="background: #f5f3ff; border-color: #ddd6fe; color: #6d28d9;" onclick="openAdminDashboard()">👑 Administrar Tienda & Pedidos</div>
+      </div>
+
+      <div class="sidebar-section">
+        <h4>Categorías / Marcas</h4>
+        <div id="sidebar-brand-list" class="brand-nav-list"></div>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout" onclick="handleLogout()">Cerrar Sesión</button>
+    </div>
+  </div>
+
+  <!-- INICIAR SESIÓN -->
+  <div id="login-view" class="auth-container animate-slow-appear">
+    <div class="neon-logo-container" style="width: 9rem; height: 9rem;">
+      <img src="logo-glamwar.png" alt="GlamWar Logo" class="logo-img">
+    </div>
+    <h1>GLAMWAR</h1>
+    <p class="subtitle">Iniciar Sesión</p>
+
+    <div class="auth-form">
+      <div class="form-group">
+        <label>Correo Electrónico</label>
+        <input type="email" id="login-email" placeholder="ejemplo@correo.com">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" placeholder="••••••••">
+      </div>
+      <div id="login-error" class="error-msg"></div>
+      <button class="auth-btn" onclick="handleLogin()">ENTRAR</button>
+      <button class="btn-guest" onclick="loginAsGuest()">Continuar como Invitado 🛍️</button>
+
+      <div class="switch-auth">
+        ¿No tienes cuenta? <a onclick="switchAuth('register')">Regístrate aquí</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTRO -->
+  <div id="register-view" class="auth-container hidden animate-slow-appear">
+    <div class="neon-logo-container" style="width: 9rem; height: 9rem;">
+      <img src="logo-glamwar.png" alt="GlamWar Logo" class="logo-img">
+    </div>
+    <h1>GLAMWAR</h1>
+    <p class="subtitle">Crear Cuenta</p>
+
+    <div class="auth-form">
+      <div class="form-group">
+        <label>Nombre Completo</label>
+        <input type="text" id="reg-name" placeholder="Tu nombre">
+      </div>
+      <div class="form-group">
+        <label>Correo Electrónico</label>
+        <input type="email" id="reg-email" placeholder="ejemplo@correo.com">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="reg-pass" placeholder="••••••••">
+      </div>
+      <div id="reg-error" class="error-msg"></div>
+      <button class="auth-btn" onclick="handleRegister()">REGISTRARSE</button>
+      <div class="switch-auth">
+        ¿Ya tienes cuenta? <a onclick="switchAuth('login')">Inicia sesión</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATÁLOGO PRINCIPAL -->
+  <main id="home-view" class="hidden animate-slow-appear">
+    <div class="top-nav-bar">
+      <button class="menu-btn" onclick="toggleSidebar()">
+        <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        Menú
+      </button>
+      <button class="menu-btn cart-nav-btn" onclick="openCartView()" aria-label="Abrir carrito de compras">
+        🛒 Carrito (<span id="cart-badge">0</span>)
+      </button>
+      <div id="top-admin-badge" class="hidden">
+        <span class="admin-badge-tag">Admin 👑</span>
+      </div>
+    </div>
+
+    <div class="neon-logo-container">
+      <img src="logo-glamwar.png" alt="GlamWar Maquillaje Logo" class="logo-img">
+    </div>
+
+    <h1>¡TU LOOK EMPIEZA AQUÍ!</h1>
+    <p class="subtitle">Cosméticos & Maquillaje</p>
+
+    <div class="search-container">
+      <input type="text" id="product-search" class="search-input" placeholder="🔍 Buscar producto por nombre..." oninput="filterProducts()" autocomplete="off">
+      <div id="suggestions-box" class="suggestions-box"></div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-row">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>Malecón V-D, Gve, Sin.</span>
+      </div>
+      <div class="info-subrow">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>6:00 p.m. a 10:00 p.m.</span>
+      </div>
+    </div>
+    
+    <div class="section-title-bar">
+      ✨ Productos Destacados
+    </div>
+    <div id="random-products-grid" class="products-container"></div>
+
+    <div class="buttons-container">
+      <a href="https://wa.me/526871996659" target="_blank" class="btn-whatsapp">
+        <svg style="width: 1.25rem; height: 1.25rem; fill: currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+        CONTACTAR POR WHATSAPP
+      </a>
+      <a href="https://instagram.com/glam.war" target="_blank" class="btn-instagram">
+        <svg style="width: 1.25rem; height: 1.25rem; stroke: #db2777;" fill="none" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+        INSTAGRAM @glam.war
+      </a>
+      <a href="https://www.tiktok.com/@glam.war?_r=1&_t=ZS-9AnveV1fSD3" target="_blank" class="btn-tiktok">
+        <svg style="width: 1.25rem; height: 1.25rem; fill: #db2777;" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.82.56-1.32 1.54-1.33 2.53-.02 1.14.59 2.22 1.58 2.76.92.51 2.07.56 3.03.11.88-.41 1.5-1.24 1.69-2.19.08-.43.12-.87.12-1.31V.02z"/></svg>
+        TIKTOK @glam.war
+      </a>
+    </div>
+  </main>
+
+  <!-- VISTA ADMINISTRADOR -->
+  <div id="admin-view" class="admin-view hidden animate-slow-appear">
+    <div class="top-nav-bar" style="margin-bottom: 0.5rem;">
+      <button class="menu-btn" onclick="goBackOrHome()">← Volver a la Tienda</button>
+      <span style="font-size: 0.85rem; font-weight: 700; color: #7c3aed;">Panel Gerencial Pro</span>
+    </div>
+
+    <div class="admin-dashboard-view">
+      <h2>👑 Panel de Control GlamWar</h2>
+      <p style="font-size: 0.75rem; color: #6b7280; margin-bottom: 1rem;">Administra productos, tonos, fotos y stock con sincronización permanente en Supabase.</p>
+
+      <div class="admin-stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="admin-total-orders">0</div>
+          <div class="stat-label">Pedidos Totales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="admin-total-sales">$0</div>
+          <div class="stat-label">Ventas Estimadas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="admin-total-users">0</div>
+          <div class="stat-label">Clientes Registrados</div>
+        </div>
+      </div>
+
+      <!-- ALTA DE PRODUCTOS MEJORADA -->
+      <div class="admin-section-box">
+        <h4>✨ Agregar Nuevo Producto / Colección</h4>
+        <div class="admin-form-group">
+          <label>Nombre del Producto</label>
+          <input type="text" id="new-prod-name" class="admin-form-input" placeholder="Ej. Power Grip Matte Primer">
+        </div>
+        <div class="admin-form-group">
+          <label>Marca / Categoría</label>
+          <select id="new-prod-brand-select" class="admin-form-select" onchange="checkNewBrandInput(this)">
+            <!-- Se carga dinámicamente desde Supabase -->
+            <option value="other">➕ Escribir nueva marca...</option>
+          </select>
+          <input type="text" id="new-prod-brand-custom" class="admin-form-input hidden" placeholder="Nombre de la nueva marca..." style="margin-top: 0.4rem;">
+        </div>
+        <div class="admin-form-group">
+          <label>Descripción del Producto</label>
+          <textarea id="new-prod-description" class="admin-form-input" rows="3" placeholder="Describe el producto, sus beneficios y características..."></textarea>
+        </div>
+        <div class="admin-form-group">
+          <label>Características del Producto</label>
+          <textarea id="new-prod-features" class="admin-form-input" rows="3" placeholder="Ej. Acabado mate, larga duración, contenido 60 ml, tipo de piel..."></textarea>
+        </div>
+        <div class="admin-form-group">
+          <label>Precio ($ MXN)</label>
+          <input type="number" id="new-prod-price" class="admin-form-input" placeholder="Ej. 250">
+        </div>
+
+        <div class="admin-form-group">
+          <label>🎨 Tonos, Stock y Fotos por Tono</label>
+          <div id="new-prod-shades-container"></div>
+          <button type="button" class="btn-add-shade-row" onclick="addShadeInputRow()">➕ Agregar Otro Tono / Variante</button>
+        </div>
+
+        <button id="btn-save-product-action" class="btn-save-new-prod" onclick="addNewProductFromAdmin()">Guardar Producto en Supabase 🚀</button>
+      </div>
+
+      <!-- INVENTARIO -->
+      <div class="admin-section-box">
+        <h4>📦 Inventario, Stock y Fotos por Tono</h4>
+        <div id="admin-inventory-list"></div>
+      </div>
+
+      <!-- PEDIDOS -->
+      <div class="admin-section-box">
+        <h4>📦 Historial de Pedidos de Clientes</h4>
+        <div id="admin-orders-list" class="order-history-list">
+          <p style="font-size: 0.75rem; color: #9ca3af; text-align: center; padding: 1rem;">No hay pedidos registrados todavía.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARRITO -->
+  <div id="cart-view" class="section-view hidden animate-slow-appear" style="max-width:900px;margin:1rem auto;padding:1rem;">
+    <div class="top-nav-bar" style="margin-bottom:1rem;">
+      <button class="menu-btn" onclick="goBackOrHome()">← Seguir comprando</button>
+      <span class="admin-badge-tag" style="background:#fce7f3;color:#be185d;">🛒 Mi carrito</span>
+    </div>
+    <div class="product-detail-card" style="padding:clamp(1rem,3vw,2rem);">
+      <h1 style="color:#db2777;margin-top:0;">Mi carrito de compras</h1>
+      <p class="subtitle" style="margin-bottom:1.25rem;">Revisa tus productos antes de realizar tu pedido.</p>
+      <h4 style="margin-bottom:.75rem;">Productos agregados (<span id="cart-count">0</span>)</h4>
+      <div id="cart-items-container" class="cart-items-list">
+        <p style="font-size:0.9rem;color:#9ca3af;text-align:center;padding:1.5rem 0;">Tu carrito está vacío</p>
+      </div>
+      <div class="cart-total" style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f3d4e5;">
+        <span>Total:</span>
+        <span id="cart-total-price" style="color:#db2777;font-size:1.2rem;">$0</span>
+      </div>
+      <button type="button" class="add-to-cart-btn" style="width:100%;margin-top:1rem;padding:.9rem;" onclick="openCheckout()">💳 Comprar carrito / Pagar ahora</button>
+    </div>
+  </div>
+
+  <!-- DETALLE DEL PRODUCTO -->
+  <div id="product-detail-view" class="product-detail-view hidden animate-slow-appear">
+    <div class="top-nav-bar" style="margin-bottom: 0.5rem;">
+      <button class="menu-btn" onclick="goBackOrHome()">← Regresar</button>
+      <button class="menu-btn" onclick="openCartView()">
+        🛒 Carrito (<span id="cart-badge-detail">0</span>)
+      </button>
+    </div>
+    <div class="product-detail-card" id="detail-card-content"></div>
+  </div>
+
+  <!-- CONTENEDOR DINÁMICO DE SECCIONES DE MARCAS -->
+  <div id="dynamic-sections-container"></div>
+
+  <footer>© GlamWar Maquillaje</footer>
+
+  <!-- MODAL DE CHECKOUT -->
+  <div id="checkout-modal" class="hidden" style="position:fixed;inset:0;z-index:9999;background:#0008;overflow:auto;padding:1rem;">
+    <div style="max-width:680px;margin:2rem auto;background:#fff;border-radius:18px;padding:1.25rem;color:#374151;box-shadow:0 15px 50px #0003;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem"><h2 style="color:#db2777;margin:0">💗 Finalizar compra</h2><button onclick="closeCheckout()" aria-label="Cerrar" style="border:0;background:#fce7f3;border-radius:50%;padding:.5rem .7rem">✕</button></div>
+      <p>Realiza la transferencia y envía tu comprobante. Tu pedido quedará pendiente hasta que GlamWar confirme el pago.</p>
+      <div style="background:#fce7f3;padding:1rem;border-radius:12px;margin:1rem 0;line-height:1.8"><b>DATOS DE PAGO · MERCADO PAGO</b><br>Beneficiario: Denis Sánchez<br>No. de cuenta: <b>5428 7808 3094 2603</b><br>Enviar comprobante al WhatsApp: <b>687 199 6659</b> o Instagram: <b>@glam.war</b></div>
+      <div id="checkout-summary"></div>
+      <div class="admin-form-group"><label>Nombre para el pedido</label><input id="checkout-customer" class="admin-form-input" placeholder="Tu nombre" /></div>
+      <div class="admin-form-group"><label>Teléfono de contacto</label><input id="checkout-phone" class="admin-form-input" type="tel" placeholder="Tu WhatsApp" autocomplete="tel" /></div>
+      <h3 style="color:#db2777;margin:1.1rem 0 .5rem">📍 Dirección de entrega</h3>
+      <div class="admin-form-group"><label>Código postal</label><input id="checkout-postal" class="admin-form-input" inputmode="numeric" maxlength="5" placeholder="Ej. 81000" autocomplete="postal-code" /></div>
+      <div class="admin-form-group"><label>Estado</label><input id="checkout-state" class="admin-form-input" placeholder="Tu estado (ej. Sinaloa)" autocomplete="address-level1" /></div>
+      <div class="admin-form-group"><label>Ciudad</label><input id="checkout-city" class="admin-form-input" placeholder="Tu ciudad" autocomplete="address-level2" /></div>
+      <div class="admin-form-group"><label>Colonia</label><input id="checkout-colony" class="admin-form-input" placeholder="Tu colonia" autocomplete="address-level3" /></div>
+      <div class="admin-form-group"><label>Calle</label><input id="checkout-street" class="admin-form-input" placeholder="Nombre de la calle" autocomplete="street-address" /></div>
+      <div class="admin-form-group"><label>Número de casa</label><input id="checkout-house" class="admin-form-input" placeholder="Número exterior o S/N si no tiene" /></div>
+      <div class="admin-form-group"><label>Notas / Referencias (opcional)</label><textarea id="checkout-notes" class="admin-form-input" rows="2" placeholder="Referencias para encontrar tu domicilio, entre calles, etc."></textarea></div>
+      <button class="add-to-cart-btn" style="width:100%" onclick="submitCheckout()">Enviar pedido y datos de transferencia</button>
+      <p style="font-size:.78rem;color:#6b7280;margin-top:0.4rem">El stock se reservará formalmente una vez que el administrador confirme la recepción de la transferencia.</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // CREDENCIALES CONFIGURADAS
+    const SUPABASE_URL = "https://mvsyoqobdrmjejrpqbtq.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_if3I5GYNCSEIOPBMjydCJQ_Fevl0cjx";
+
+    let supabaseClient = null;
+    let cart = [];
+    let currentDetailProduct = null;
+    let currentDetailQuantity = 1;
+    let currentUserRole = "cliente";
+    let shadeInputCount = 0;
+
+    function gwSupabaseConfigured() {
+      return typeof SUPABASE_URL === 'string' && SUPABASE_URL.startsWith('https://') &&
+        !SUPABASE_URL.includes('PEGA_AQUI') && typeof SUPABASE_PUBLISHABLE_KEY === 'string' &&
+        SUPABASE_PUBLISHABLE_KEY.length > 20;
+    }
+
+    if (gwSupabaseConfigured() && window.supabase?.createClient) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      });
+    }
+
+    function gwRequireSupabase() {
+      if (!supabaseClient) throw new Error('Falta configurar las credenciales de Supabase.');
+      return supabaseClient;
+    }
+
+    function compressImage(file, maxWidth = 350, quality = 0.55) {
+      return new Promise((resolve) => {
+        if (!file || !file.type.startsWith('image/')) {
+          resolve('1000064344.png');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onerror = () => resolve('1000064344.png');
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onerror = () => resolve('1000064344.png');
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width; let height = img.height;
+            if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+            canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            try {
+              resolve(canvas.toDataURL('image/jpeg', quality));
+            } catch (err) {
+              resolve('1000064344.png');
+            }
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    window.addEventListener('popstate', (event) => {
+      const state = event.state;
+      if (state && state.view) renderViewByState(state.view, state.param, false);
+      else renderViewByState('home', null, false);
+    });
+
+    function navigateToView(viewName, param = null) {
+      history.pushState({ view: viewName, param: param }, '', `#${viewName}${param ? '-' + param : ''}`);
+      renderViewByState(viewName, param, true);
+    }
+
+    function renderViewByState(viewName, param, isNewState = true) {
+      document.getElementById('login-view').classList.add('hidden');
+      document.getElementById('register-view').classList.add('hidden');
+      document.getElementById('home-view').classList.add('hidden');
+      document.getElementById('product-detail-view').classList.add('hidden');
+      document.getElementById('cart-view').classList.add('hidden');
+      document.getElementById('admin-view').classList.add('hidden');
+      document.querySelectorAll('.section-view').forEach(sec => sec.classList.add('hidden'));
+
+      if (viewName === 'login') document.getElementById('login-view').classList.remove('hidden');
+      else if (viewName === 'register') document.getElementById('register-view').classList.remove('hidden');
+      else if (viewName === 'home') { document.getElementById('home-view').classList.remove('hidden'); loadRandomFeaturedProducts(); }
+      else if (viewName === 'section' && param) {
+        const sec = document.getElementById('section-' + param);
+        if (sec) sec.classList.remove('hidden');
+      } else if (viewName === 'detail') document.getElementById('product-detail-view').classList.remove('hidden');
+      else if (viewName === 'cart') { document.getElementById('cart-view').classList.remove('hidden'); updateCartUI(); }
+      else if (viewName === 'admin') { document.getElementById('admin-view').classList.remove('hidden'); loadAdminData(); }
+      window.scrollTo(0, 0);
+    }
+
+    function goBackOrHome() {
+      if (window.history.length > 1) window.history.back();
+      else navigateToView('home');
+    }
+
+    function switchAuth(view) { navigateToView(view); }
+
+    function openHome(name, role = "cliente") {
+      currentUserRole = role;
+      document.getElementById('sidebar-user-name').textContent = name + (role === "admin" ? " (Admin)" : "");
+      if (role === "admin") {
+        document.getElementById('top-admin-badge').classList.remove('hidden');
+        document.getElementById('admin-sidebar-option').classList.remove('hidden');
+      } else {
+        document.getElementById('top-admin-badge').classList.add('hidden');
+        document.getElementById('admin-sidebar-option').classList.add('hidden');
+      }
+      navigateToView('home');
+      loadCart(name);
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('active');
+    }
+
+    function navigateToBrand(brandSlug) {
+      toggleSidebar();
+      navigateToView('section', brandSlug);
+    }
+
+    function loadRandomFeaturedProducts() {
+      const randomContainer = document.getElementById('random-products-grid');
+      if (!randomContainer) return;
+      const allProductCards = document.querySelectorAll('#dynamic-sections-container .product-card');
+      if (allProductCards.length === 0) return;
+      
+      const cardsArray = Array.from(allProductCards);
+      for (let i = cardsArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cardsArray[i], cardsArray[j]] = [cardsArray[j], cardsArray[i]];
+      }
+
+      const selectedCards = cardsArray.slice(0, 8);
+      randomContainer.innerHTML = '';
+      selectedCards.forEach(card => {
+        const clone = card.cloneNode(true);
+        clone.style.gridColumn = 'auto';
+        randomContainer.appendChild(clone);
+      });
+    }
+
+    function loadCart(userName) {
+      try {
+        const savedCart = localStorage.getItem("cart_" + userName);
+        cart = savedCart ? JSON.parse(savedCart) : [];
+      } catch (e) { cart = []; }
+      updateCartUI();
+    }
+
+    function saveCart() {
+      const activeUser = localStorage.getItem("glamwar_active_user") || "Invitado";
+      try { localStorage.setItem("cart_" + activeUser, JSON.stringify(cart)); } catch (e) {}
+    }
+
+    function selectShadeCard(event, element) {
+      event.stopPropagation();
+      if (element.classList.contains('shade-sold')) return;
+      const parentList = element.closest('.shades-list');
+      parentList.querySelectorAll('.shade-item').forEach(item => item.classList.remove('selected'));
+      element.classList.add('selected');
+
+      const card = element.closest('.product-card');
+      const addBtn = card ? card.querySelector('.add-to-cart-btn') : null;
+      if (addBtn) addBtn.disabled = false;
+
+      try {
+        const images = JSON.parse(element.getAttribute('data-images')) || [];
+        if (images.length > 0 && card) {
+          const cardImg = card.querySelector('.product-img');
+          if (cardImg) cardImg.src = images[0];
+        }
+      } catch(e) {}
+    }
+
+    function changeDetailQuantity(delta) {
+      const selected = document.querySelector('.detail-shades-container .detail-shade-item.selected');
+      const maxStock = selected ? Math.max(0, parseInt(selected.getAttribute('data-stock') || '99', 10)) : 99;
+      
+      currentDetailQuantity = Math.max(1, Math.min(maxStock, currentDetailQuantity + delta));
+      const qtyNumEl = document.getElementById('detail-qty-num');
+      if (qtyNumEl) qtyNumEl.textContent = currentDetailQuantity;
+    }
+
+    function selectDetailShade(element) {
+      if (!element) return;
+      const container = element.closest('.detail-shades-container');
+      container.querySelectorAll('.detail-shade-item').forEach(item => item.classList.remove('selected'));
+      element.classList.add('selected');
+
+      const stock = Math.max(0, parseInt(element.getAttribute('data-stock') || '0', 10) || 0);
+      const stockLabel = document.getElementById('detail-stock-label');
+      const orderBtn = document.querySelector('.btn-order-now');
+      const addBtn = document.querySelector('.btn-add-detail');
+
+      currentDetailQuantity = 1;
+      const qtyNumEl = document.getElementById('detail-qty-num');
+      if (qtyNumEl) qtyNumEl.textContent = currentDetailQuantity;
+
+      if (stockLabel) {
+        const shadeName = element.getAttribute('data-shade') || 'Estándar';
+        stockLabel.textContent = stock > 0 ? `${shadeName} · ${stock} disponible(s)` : `${shadeName} · AGOTADO (SOLD OUT)`;
+        stockLabel.classList.toggle('out', stock <= 0);
+      }
+
+      if (stock <= 0) {
+        if (orderBtn) { orderBtn.disabled = true; orderBtn.style.opacity = '0.5'; orderBtn.style.cursor = 'not-allowed'; }
+        if (addBtn) { addBtn.disabled = true; addBtn.style.opacity = '0.5'; addBtn.style.cursor = 'not-allowed'; }
+      } else {
+        if (orderBtn) { orderBtn.disabled = false; orderBtn.style.opacity = '1'; orderBtn.style.cursor = 'pointer'; }
+        if (addBtn) { addBtn.disabled = false; addBtn.style.opacity = '1'; addBtn.style.cursor = 'pointer'; }
+      }
+
+      try {
+        const images = JSON.parse(element.getAttribute('data-images') || '[]');
+        if (currentDetailProduct) currentDetailProduct.activeShadeImages = images.length ? images : ['1000064344.png'];
+        renderDetailGallery(images);
+      } catch(e) { renderDetailGallery(['1000064344.png']); }
+    }
+
+    function renderDetailGallery(images) {
+      const mainImgTag = document.getElementById('detail-main-img-tag');
+      const thumbsContainer = document.getElementById('detail-thumbs-container');
+      if (!mainImgTag || !thumbsContainer) return;
+      if (!images || images.length === 0) images = ['1000064344.png'];
+      mainImgTag.src = images[0];
+      thumbsContainer.innerHTML = images.map((img, idx) => `<img src="${escapeHTML(img)}" alt="Foto ${idx + 1}" class="detail-thumb ${idx === 0 ? 'active-thumb' : ''}" onclick="changeMainImage(this.src, this)">`).join('');
+    }
+
+    function changeMainImage(imgSrc, thumbElement) {
+      document.getElementById('detail-main-img-tag').src = imgSrc;
+      thumbElement.parentNode.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active-thumb'));
+      thumbElement.classList.add('active-thumb');
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
+    function openProductDetail(cardElement) {
+      if (!cardElement) return;
+      const productId = cardElement.getAttribute('data-id');
+      const title = cardElement.querySelector('.product-title')?.textContent?.trim() || 'Producto';
+      const priceText = cardElement.querySelector('.product-price')?.textContent || '$0';
+      const price = Number.parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
+      let productDescription = cardElement.getAttribute('data-description') || '';
+      let productFeatures = cardElement.getAttribute('data-features') || '';
+      try { productDescription = decodeURIComponent(productDescription); } catch(e){}
+      try { productFeatures = decodeURIComponent(productFeatures); } catch(e){}
+
+      const sourceShades = cardElement.querySelector('.shades-list');
+      let shades = sourceShades ? Array.from(sourceShades.querySelectorAll('.shade-item')) : [];
+      if (!shades.length) shades = [{getAttribute: (a) => a === 'data-shade' ? 'Estándar' : a === 'data-stock' ? '1' : null, textContent:'Estándar', classList:{contains:()=>false}}];
+      
+      const shadeMarkup = shades.map((shade, idx) => {
+        const shadeName = shade.getAttribute('data-shade') || shade.textContent.replace(/SOLD OUT/g, '').trim();
+        const stock = Math.max(0, parseInt(shade.getAttribute('data-stock') || '0', 10) || 0);
+        let imgs = []; try { imgs = JSON.parse(shade.getAttribute('data-images') || '[]'); } catch(e) {}
+        const sold = stock <= 0;
+        return `<button type="button" class="detail-shade-item ${!sold && idx===0 ? 'selected' : ''} ${sold ? 'shade-sold' : ''}" data-shade="${escapeHTML(shadeName)}" data-stock="${stock}" data-images="${escapeHTML(JSON.stringify(imgs))}" onclick="selectDetailShade(this)">${escapeHTML(shadeName)}${sold ? ' · SOLD OUT' : ''}</button>`;
+      }).join('');
+
+      let defaultImages = ['1000064344.png'];
+      const preferredShade = shades.find(sh => Number(sh.getAttribute('data-stock') || 0) > 0) || shades[0];
+      try { if (preferredShade) defaultImages = JSON.parse(preferredShade.getAttribute('data-images') || '[]'); } catch(e) {}
+      if (!defaultImages.length) defaultImages = ['1000064344.png'];
+      currentDetailProduct = { productId, title, price, activeShadeImages: defaultImages, cardElement };
+      currentDetailQuantity = 1;
+
+      const detailContent = document.getElementById('detail-card-content');
+      detailContent.innerHTML = `
+        <div class="detail-gallery">
+          <img src="${escapeHTML(defaultImages[0])}" alt="${escapeHTML(title)}" class="detail-main-img" id="detail-main-img-tag">
+          <div class="detail-thumbs" id="detail-thumbs-container"></div>
+        </div>
+        <div class="detail-info">
+          <div class="detail-title">${escapeHTML(title)}</div>
+          <div class="detail-price">${escapeHTML(priceText)} <span style="font-size:.75rem;color:#6b7280;font-weight:500;">MXN</span></div>
+          <div class="detail-stock" id="detail-stock-label">Selecciona un tono para consultar disponibilidad</div>
+          <h3 style="font-size:.9rem;margin:.5rem 0 0;color:#111827;">Descripción</h3>
+          <div class="detail-desc">${productDescription ? escapeHTML(productDescription).replace(/\n/g, '<br>') : 'Producto de GlamWar Maquillaje.'}</div>
+          <h3 style="font-size:.9rem;margin:.5rem 0 0;color:#111827;">Características</h3>
+          <div class="detail-features">${productFeatures ? escapeHTML(productFeatures).replace(/\n/g, '<br>') : 'Sin especificaciones adicionales.'}</div>
+          <div class="detail-shades-title">Tonos / Variantes disponibles</div>
+          <div class="detail-shades-container">${shadeMarkup}</div>
+          
+          <div class="quantity-selector-box">
+            <label>Cantidad:</label>
+            <button class="qty-btn" onclick="changeDetailQuantity(-1)">-</button>
+            <span class="qty-number" id="detail-qty-num">1</span>
+            <button class="qty-btn" onclick="changeDetailQuantity(1)">+</button>
+          </div>
+
+          <div class="detail-actions">
+            <button class="btn-order-now" onclick="registerOrderAndRedirect()">⚡ Hacer Pedido Directo</button>
+            <button class="btn-add-detail" onclick="addToCartFromDetail()">🛒 Agregar al Carrito</button>
+          </div>
+        </div>`;
+      renderDetailGallery(defaultImages);
+      const firstAvailable = detailContent.querySelector('.detail-shade-item:not(.shade-sold)') || detailContent.querySelector('.detail-shade-item');
+      if (firstAvailable) selectDetailShade(firstAvailable);
+      navigateToView('detail');
+    }
+
+    function registerOrderAndRedirect() {
+      if (!currentDetailProduct) return;
+      const selected = document.querySelector('.detail-shades-container .detail-shade-item.selected');
+      if (!selected) { alert('Selecciona un tono disponible.'); return; }
+      const shade = selected.getAttribute('data-shade');
+      const stock = Number(selected.getAttribute('data-stock') || 0);
+      if (stock <= 0) { alert('Este tono está agotado (SOLD OUT).'); return; }
+      openCheckout({ title: `${currentDetailProduct.title} (${shade})`, price: currentDetailProduct.price, productId: currentDetailProduct.productId, shade, quantity: currentDetailQuantity });
+    }
+
+    function addToCartFromDetail() {
+      if (!currentDetailProduct) return;
+      const selected = document.querySelector('.detail-shades-container .detail-shade-item.selected');
+      if (!selected) { alert("Por favor selecciona un tono."); return; }
+      const shadeName = selected.getAttribute('data-shade');
+      const stock = Math.max(0, parseInt(selected.getAttribute('data-stock') || '0', 10) || 0);
+      if (stock <= 0) { alert('Este tono está agotado (SOLD OUT).'); return; }
+
+      const finalName = `${currentDetailProduct.title} (${shadeName})`;
+      
+      const existingIndex = cart.findIndex(item => item.productId === currentDetailProduct.productId && item.shade === shadeName);
+      if (existingIndex > -1) {
+        const newQty = cart[existingIndex].quantity + currentDetailQuantity;
+        if (newQty > stock) {
+          alert(`Lo sentimos, solo hay ${stock} unidades disponibles de este tono.`);
+          return;
+        }
+        cart[existingIndex].quantity = newQty;
+        alert(`¡Se actualizó la cantidad a ${cart[existingIndex].quantity} unidades de "${finalName}" en tu carrito! 🛍️`);
+      } else {
+        cart.push({ title: finalName, price: currentDetailProduct.price, productId: currentDetailProduct.productId, shade: shadeName, quantity: currentDetailQuantity });
+        alert(`¡"${finalName}" (×${currentDetailQuantity}) agregado al carrito! 🛍️`);
+      }
+
+      saveCart(); updateCartUI();
+    }
+
+    function addToCartFromCard(button, title, price) {
+      const card = button.closest('.product-card');
+      const selectedShade = card.querySelector('.shade-item.selected') || card.querySelector('.shade-item:not(.shade-sold)');
+      if (!selectedShade) { alert("Todos los tonos de este producto están agotados (SOLD OUT). 💔"); return; }
+      const shadeName = selectedShade.getAttribute('data-shade') || selectedShade.textContent.replace(/SOLD OUT/g, '').trim();
+      const stock = Math.max(0, parseInt(selectedShade.getAttribute('data-stock') || '0', 10) || 0);
+      if (stock <= 0) { alert('Este tono está agotado (SOLD OUT).'); return; }
+      const productId = card.getAttribute('data-id');
+      const finalTitle = `${title} (${shadeName})`;
+
+      const existingIndex = cart.findIndex(item => item.productId === productId && item.shade === shadeName);
+      if (existingIndex > -1) {
+        if (cart[existingIndex].quantity + 1 > stock) {
+          alert(`Lo sentimos, solo hay ${stock} unidades disponibles de este tono.`);
+          return;
+        }
+        cart[existingIndex].quantity += 1;
+        alert(`¡Ahora llevas ${cart[existingIndex].quantity} unidades de "${finalTitle}" en tu carrito! 🛍️`);
+      } else {
+        cart.push({ title: finalTitle, price, productId, shade: shadeName, quantity: 1 });
+        alert(`¡"${finalTitle}" agregado al carrito! 🛍️`);
+      }
+
+      saveCart(); updateCartUI();
+    }
+
+    function changeCartItemQty(index, delta) {
+      if (index < 0 || index >= cart.length) return;
+      cart[index].quantity = Math.max(1, cart[index].quantity + delta);
+      saveCart();
+      updateCartUI();
+    }
+
+    function openCheckout(singleItem = null) {
+      if (singleItem) cart = [singleItem];
+      if (!cart.length) { alert('Tu carrito está vacío.'); return; }
+      const total = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0);
+      document.getElementById('checkout-summary').innerHTML = '<h3>Resumen del pedido</h3>' + cart.map(item => `<div style="display:flex;justify-content:space-between;gap:1rem;border-bottom:1px solid #f3f4f6;padding:.45rem 0"><span>${escapeHTML(item.title)} × ${item.quantity || 1}</span><b>$${Number(item.price) * Number(item.quantity || 1)}</b></div>`).join('') + `<h3 style="text-align:right;color:#db2777">Total: $${total} MXN</h3>`;
+      document.getElementById('checkout-modal').classList.remove('hidden');
+    }
+
+    function closeCheckout() { document.getElementById('checkout-modal').classList.add('hidden'); }
+
+    function openCartView() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('active');
+      navigateToView('cart');
+    }
+
+    function removeFromCart(index) { cart.splice(index, 1); saveCart(); updateCartUI(); }
+
+    function updateCartUI() {
+      const container = document.getElementById('cart-items-container');
+      const countBadge = document.getElementById('cart-count');
+      const badgeTop = document.getElementById('cart-badge');
+      const badgeDetail = document.getElementById('cart-badge-detail');
+      const totalPriceEl = document.getElementById('cart-total-price');
+
+      const totalItemsCount = cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0);
+      countBadge.textContent = totalItemsCount;
+      if (badgeTop) badgeTop.textContent = totalItemsCount;
+      if (badgeDetail) badgeDetail.textContent = totalItemsCount;
+
+      if (cart.length === 0) {
+        container.innerHTML = `<p style="font-size: 0.75rem; color: #9ca3af; text-align: center; padding: 1rem 0;">Tu carrito está vacío</p>`;
+        totalPriceEl.textContent = "$0";
+        return;
+      }
+
+      let total = 0;
+      container.innerHTML = cart.map((item, index) => {
+        total += Number(item.price) * Number(item.quantity || 1);
+        return `
+          <div class="cart-item">
+            <div class="cart-item-info">
+              <span class="cart-item-title">${escapeHTML(item.title)}</span>
+              <span class="cart-item-price">$${Number(item.price) * Number(item.quantity || 1)} · Tono: ${escapeHTML(item.shade || "Estándar")}</span>
+            </div>
+            <div class="cart-qty-controls">
+              <button class="cart-qty-btn" onclick="changeCartItemQty(${index}, -1)">-</button>
+              <span style="font-size:0.8rem; font-weight:800; color:#be185d;">${item.quantity || 1}</span>
+              <button class="cart-qty-btn" onclick="changeCartItemQty(${index}, 1)">+</button>
+            </div>
+            <button class="remove-cart-item" onclick="removeFromCart(${index})" title="Eliminar">🗑️</button>
+          </div>
+        `;
+      }).join('');
+      totalPriceEl.textContent = `$${total}`;
+    }
+
+    function openAdminDashboard() {
+      toggleSidebar();
+      if (currentUserRole !== "admin") { alert("Acceso denegado. Solo administradores."); return; }
+      navigateToView('admin');
+    }
+
+    function checkNewBrandInput(selectElement) {
+      const customInput = document.getElementById('new-prod-brand-custom');
+      if (selectElement.value === 'other') { customInput.classList.remove('hidden'); customInput.focus(); }
+      else customInput.classList.add('hidden');
+    }
+
+    function addShadeInputRow() {
+      shadeInputCount++;
+      const container = document.getElementById('new-prod-shades-container');
+      const card = document.createElement('div');
+      card.className = 'shade-input-card';
+      card.id = `shade-input-card-${shadeInputCount}`;
+      card.innerHTML = `
+        <div class="shade-input-row">
+          <input type="text" class="admin-form-input shade-name-input" placeholder="Nombre Tono (ej. Matte, Glow)" style="flex:2;">
+          <input type="number" class="admin-form-input shade-stock-input" placeholder="Stock" min="0" value="5" style="flex:1;">
+          <button type="button" class="btn-delete-order" style="padding:0.3rem 0.5rem;" onclick="removeShadeInputRow(${shadeInputCount})">✕</button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.2rem;">
+          <label style="font-size:0.65rem; color:#6b7280;">Fotos para este tono:</label>
+          <input type="file" class="admin-form-input shade-files-input" accept="image/*" multiple style="font-size:0.7rem;">
+        </div>
+      `;
+      container.appendChild(card);
+    }
+
+    function removeShadeInputRow(id) {
+      const el = document.getElementById(`shade-input-card-${id}`);
+      if (el) el.remove();
+    }
+
+    async function handleRegister() {
+      const nameInput = document.getElementById('reg-name');
+      const emailInput = document.getElementById('reg-email');
+      const passInput = document.getElementById('reg-pass');
+      const errorDiv = document.getElementById('reg-error'); 
+      if (errorDiv) errorDiv.textContent = '';
+
+      const name = nameInput ? nameInput.value.trim() : '';
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+      const pass = passInput ? passInput.value : '';
+
+      try {
+        const sb = gwRequireSupabase();
+        if (!name || !email || !pass) throw new Error('Completa todos los campos.');
+        if (pass.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
+        
+        const { data, error } = await sb.auth.signUp({ 
+          email: email, 
+          password: pass, 
+          options: { data: { nombre: name } } 
+        });
+        
+        if (error) throw error;
+        
+        if (data && data.session) {
+          openHome(name, 'cliente');
+          await gwLoadSupabaseCatalog();
+        } else {
+          if (errorDiv) {
+            errorDiv.style.color = '#047857';
+            errorDiv.textContent = '¡Cuenta creada con éxito! Ya puedes iniciar sesión.';
+          }
+        }
+      } catch (err) { 
+        if (errorDiv) {
+          errorDiv.style.color = '#dc2626';
+          errorDiv.textContent = err.message || 'Error al registrarte.'; 
+        }
+      }
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value.trim().toLowerCase();
+      const pass = document.getElementById('login-pass').value;
+      const errorDiv = document.getElementById('login-error'); errorDiv.textContent = '';
+      try {
+        const sb = gwRequireSupabase();
+        if (!email || !pass) throw new Error('Ingresa tu correo y contraseña.');
+        const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+        if (error) throw error;
+        
+        const { data: profile } = await sb.from('perfiles').select('rol,nombre').eq('id', data.user.id).maybeSingle();
+        const role = profile?.rol === 'admin' ? 'admin' : 'cliente';
+        const name = profile?.nombre || data.user.user_metadata?.nombre || email;
+        
+        openHome(name, role);
+        await gwLoadSupabaseCatalog();
+        if (role === 'admin') await loadAdminData();
+      } catch (err) { errorDiv.textContent = err.message || 'Credenciales incorrectas.'; }
+    }
+
+    function loginAsGuest() {
+      currentUserRole = 'cliente'; openHome('Invitado', 'cliente');
+    }
+
+    async function handleLogout() {
+      try { if (supabaseClient) await supabaseClient.auth.signOut(); } catch (err) {}
+      currentUserRole = 'cliente'; navigateToView('login');
+    }
+
+    async function loadAdminBrandsDropdown(productsList = []) {
+      try {
+        const selectEl = document.getElementById('new-prod-brand-select');
+        if (!selectEl) return;
+
+        // Extraer marcas únicas de los productos cargados
+        const uniqueBrands = [...new Set(productsList.map(p => (p.marca || '').trim()).filter(Boolean))];
+
+        let optionsHTML = uniqueBrands.map(b => `<option value="${escapeHTML(b)}">${escapeHTML(b)}</option>`).join('');
+        optionsHTML += `<option value="other">➕ Escribir nueva marca...</option>`;
+        
+        selectEl.innerHTML = optionsHTML;
+      } catch (e) {
+        console.error("Error cargando marcas en el select:", e);
+      }
+    }
+
+    async function gwLoadSupabaseCatalog() {
+      try {
+        const sb = gwRequireSupabase();
+        const [prodRes, varRes] = await Promise.all([
+          sb.from('productos').select('*').eq('activo', true).order('creado_en', { ascending: false }),
+          sb.from('variantes').select('*').eq('activo', true)
+        ]);
+
+        if (prodRes.error || !prodRes.data) return false;
+
+        gwRenderCatalog(prodRes.data, varRes.data || []);
+        await loadAdminBrandsDropdown(prodRes.data);
+        return true;
+      } catch (e) { return false; }
+    }
+
+    function gwSlug(val) { 
+      return String(val || 'otros').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); 
+    }
+
+    function gwRenderCatalog(products, variants) {
+      const root = document.getElementById('dynamic-sections-container');
+      const brandListSidebar = document.getElementById('sidebar-brand-list');
+      if (!root || !brandListSidebar) return;
+      
+      root.innerHTML = '';
+      brandListSidebar.innerHTML = '';
+
+      const byProduct = new Map();
+      variants.forEach(v => {
+        if (!byProduct.has(v.producto_id)) byProduct.set(v.producto_id, []);
+        byProduct.get(v.producto_id).push(v);
+      });
+
+      const sectionByBrandSlug = new Map();
+
+      for (const p of products) {
+        const rawBrand = (p.marca || 'GlamWar').trim();
+        const brandSlug = gwSlug(rawBrand);
+        let section = sectionByBrandSlug.get(brandSlug);
+
+        if (!section) {
+          const id = 'section-' + brandSlug;
+          section = document.createElement('div');
+          section.id = id; 
+          section.className = 'section-view hidden animate-slow-appear';
+          section.setAttribute('data-brand-slug', brandSlug);
+          section.innerHTML = `<h1 style="color:#db2777;">${escapeHTML(rawBrand)}</h1><p class="subtitle">COLECCIÓN GLAMWAR</p><div class="products-container"></div><button class="btn-back" onclick="showHome()">← Regresar al Inicio</button>`;
+          root.appendChild(section);
+          sectionByBrandSlug.set(brandSlug, section);
+
+          const navItem = document.createElement('div');
+          navItem.className = 'brand-nav-item';
+          navItem.textContent = rawBrand;
+          navItem.setAttribute('onclick', `navigateToBrand('${brandSlug}')`);
+          brandListSidebar.appendChild(navItem);
+        }
+
+        const container = section.querySelector('.products-container');
+        const card = document.createElement('div'); 
+        card.className = 'product-card';
+        card.setAttribute('data-id', p.id); 
+        card.setAttribute('data-name', p.nombre); 
+        card.setAttribute('data-brand', brandSlug);
+        card.setAttribute('data-description', encodeURIComponent(p.descripcion || '')); 
+        card.setAttribute('data-features', encodeURIComponent(p.caracteristicas || ''));
+        card.setAttribute('onclick', 'openProductDetail(this)');
+
+        const shadeRows = byProduct.get(p.id) || [];
+        const effectiveShades = shadeRows.length ? shadeRows : [{ nombre_tono: 'Estándar', stock: 1, imagenes: p.imagenes || [] }];
+        
+        let firstAvailableImg = p.imagenes?.[0] || '1000064344.png';
+        const activeShadeObj = effectiveShades.find(v => Number(v.stock) > 0) || effectiveShades[0];
+        if (activeShadeObj && Array.isArray(activeShadeObj.imagenes) && activeShadeObj.imagenes.length) {
+          firstAvailableImg = activeShadeObj.imagenes[0];
+        }
+
+        let allSoldOut = true;
+        const shadesHtml = effectiveShades.map((v, i) => {
+          const shadeName = escapeHTML(v.nombre_tono || 'Estándar'); 
+          const stock = Math.max(0, Number(v.stock) || 0);
+          if (stock > 0) allSoldOut = false;
+          const imgs = JSON.stringify(Array.isArray(v.imagenes) && v.imagenes.length ? v.imagenes : (p.imagenes || []));
+          const isSelected = stock > 0 && (i === 0 || !effectiveShades.slice(0, i).some(s => Number(s.stock) > 0));
+          return `<span class="shade-item ${stock <= 0 ? 'shade-sold' : (isSelected ? 'selected' : '')}" data-shade="${shadeName}" data-stock="${stock}" data-images='${escapeHTML(imgs)}' ${stock > 0 ? 'onclick="selectShadeCard(event, this)"' : ''}>${shadeName}${stock <= 0 ? ' <span class="badge-sold-tag">SOLD OUT</span>' : ''}</span>`;
+        }).join('');
+
+        card.innerHTML = `
+          <div class="product-card-top">
+            <img src="${escapeHTML(firstAvailableImg)}" alt="${escapeHTML(p.nombre)}" class="product-img">
+            <div class="product-header">
+              <div class="product-title">${escapeHTML(p.nombre)}</div>
+              <div class="product-price">$${Number(p.precio || 0).toFixed(2)}</div>
+            </div>
+            <div class="shades-title">Tonos Disponibles:</div>
+            <div class="shades-list" onclick="event.stopPropagation()">${shadesHtml}</div>
+          </div>
+          <div class="product-card-bottom" onclick="event.stopPropagation()">
+            <button class="add-to-cart-btn" ${allSoldOut ? 'disabled' : ''} onclick="addToCartFromCard(this, '${escapeHTML(p.nombre)}', ${Number(p.precio || 0)})">${allSoldOut ? '💔 AGOTADO' : '🛒 Agregar'}</button>
+          </div>
+        `;
+        container.appendChild(card);
+      }
+
+      loadRandomFeaturedProducts();
+    }
+
+    async function addNewProductFromAdmin() {
+      const name = document.getElementById('new-prod-name').value.trim();
+      let brandSelect = document.getElementById('new-prod-brand-select').value;
+      const brandCustom = document.getElementById('new-prod-brand-custom').value.trim();
+      const price = parseFloat(document.getElementById('new-prod-price').value) || 0;
+      const description = document.getElementById('new-prod-description').value.trim();
+      const features = document.getElementById('new-prod-features').value.trim();
+      const saveBtn = document.getElementById('btn-save-product-action');
+
+      if (!name || !price) { alert("Ingresa el nombre y el precio del producto."); return; }
+
+      let brandNameFormatted = brandSelect === 'other' ? brandCustom : brandSelect;
+      if (!brandNameFormatted) { alert("Ingresa el nombre de la marca."); return; }
+      
+      const shadeCards = document.querySelectorAll('.shade-input-card');
+      if (shadeCards.length === 0) { alert("Por favor agrega al menos un tono para el producto."); return; }
+
+      try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Guardando en Supabase... ⏳';
+
+        const variantsToInsert = [];
+        let allProductMainImages = [];
+
+        for (const card of shadeCards) {
+          const shadeName = card.querySelector('.shade-name-input').value.trim() || 'Estándar';
+          const stock = parseInt(card.querySelector('.shade-stock-input').value) || 0;
+          const fileInput = card.querySelector('.shade-files-input');
+          const files = fileInput ? fileInput.files : null;
+
+          let compressed = [];
+          if (files && files.length > 0) {
+            for (const f of Array.from(files)) {
+              const res = await compressImage(f);
+              compressed.push(res);
+            }
+            allProductMainImages = allProductMainImages.concat(compressed);
+          } else {
+            compressed = ['1000064344.png'];
+          }
+
+          variantsToInsert.push({
+            nombre_tono: shadeName,
+            stock: stock,
+            imagenes: compressed
+          });
+        }
+
+        if (!allProductMainImages.length) allProductMainImages = ['1000064344.png'];
+
+        const sb = gwRequireSupabase();
+        const { data: { user } } = await sb.auth.getUser();
+
+        const { data: prodData, error: prodError } = await sb.from('productos').insert({
+          nombre: name,
+          marca: brandNameFormatted,
+          descripcion: description,
+          caracteristicas: features,
+          precio: price,
+          imagenes: allProductMainImages,
+          creado_por: user?.id
+        }).select().single();
+
+        if (prodError) throw prodError;
+
+        const finalVariants = variantsToInsert.map(v => ({
+          producto_id: prodData.id,
+          nombre_tono: v.nombre_tono,
+          stock: v.stock,
+          imagenes: v.imagenes
+        }));
+
+        const { error: varError } = await sb.from('variantes').insert(finalVariants);
+        if (varError) throw varError;
+
+        await gwLoadSupabaseCatalog();
+        await loadAdminData();
+        alert('¡Producto y tonos creados exitosamente en Supabase! 🚀');
+
+        document.getElementById('new-prod-name').value = '';
+        document.getElementById('new-prod-price').value = '';
+        document.getElementById('new-prod-description').value = '';
+        document.getElementById('new-prod-features').value = '';
+        document.getElementById('new-prod-shades-container').innerHTML = '';
+        addShadeInputRow();
+        navigateToView('home');
+      } catch (err) { 
+        alert('Error al guardar en Supabase: ' + err.message); 
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Guardar Producto en Supabase 🚀';
+      }
+    }
+
+    async function loadAdminData() {
+      if (currentUserRole !== 'admin') return;
+      try {
+        const sb = gwRequireSupabase();
+        const [ordersRes, usersRes, prodRes, varRes] = await Promise.all([
+          sb.from('pedidos').select('*').order('creado_en', { ascending: false }),
+          sb.from('perfiles').select('id', { count: 'exact', head: true }),
+          sb.from('productos').select('*').eq('activo', true).order('creado_en'),
+          sb.from('variantes').select('*').eq('activo', true)
+        ]);
+
+        const orders = ordersRes.data || [];
+        document.getElementById('admin-total-orders').textContent = String(orders.length);
+        document.getElementById('admin-total-users').textContent = String(usersRes.count || 0);
+
+        const paidSales = orders.filter(o => o.estado === 'pago_confirmado').reduce((s, o) => s + Number(o.total || 0), 0);
+        document.getElementById('admin-total-sales').textContent = '$' + paidSales.toLocaleString('es-MX', { minimumFractionDigits: 2 });
+
+        const products = prodRes.data || [];
+        const variants = varRes.data || [];
+        const inventoryBox = document.getElementById('admin-inventory-list');
+
+        if (!products.length) {
+          inventoryBox.innerHTML = `<p style="font-size: 0.75rem; color: #9ca3af; text-align: center; padding: 1rem;">No hay productos guardados.</p>`;
+        } else {
+          inventoryBox.innerHTML = products.map(p => {
+            const pVariants = variants.filter(v => v.producto_id === p.id);
+            const variantsHtml = pVariants.map(v => {
+              const currentImgs = Array.isArray(v.imagenes) && v.imagenes.length ? v.imagenes : (p.imagenes || []);
+              const imgsPreviews = currentImgs.map(img => `<img src="${escapeHTML(img)}" alt="preview">`).join('');
+
+              return `
+                <div class="shade-admin-box">
+                  <div class="shade-admin-header">
+                    <span>Tono: <b>${escapeHTML(v.nombre_tono)}</b></span>
+                    <span>Stock actual: <b>${v.stock} ${v.stock <= 0 ? '<span style="color:#dc2626;">(SOLD OUT)</span>' : ''}</b></span>
+                  </div>
+                  
+                  <div class="shade-img-preview">${imgsPreviews}</div>
+
+                  <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+                    <input type="number" id="stock-input-${v.id}" class="admin-form-input" style="width:80px;" value="${v.stock}" min="0">
+                    <button class="btn-save-changes" onclick="updateVariantStock('${v.id}')">💾 Guardar Stock</button>
+                  </div>
+
+                  <div style="display:flex; flex-direction:column; gap:0.3rem; margin-top:0.3rem;">
+                    <label style="font-size:0.68rem; font-weight:700; color:#4c1d95;">Cambiar/Añadir fotos de este tono:</label>
+                    <input type="file" id="shade-file-${v.id}" class="admin-form-input" accept="image/*" multiple style="font-size:0.7rem;">
+                    <button class="btn-save-imgs" onclick="updateVariantImages('${v.id}', '${p.id}')">🖼️ Guardar Nuevas Fotos</button>
+                  </div>
+                </div>
+              `;
+            }).join('');
+
+            return `
+              <div class="admin-prod-edit-card">
+                <div class="admin-prod-edit-header">
+                  <span>${escapeHTML(p.nombre)} (${escapeHTML(p.marca)})</span>
+                  <button class="btn-delete-order" onclick="deleteProductFromAdmin('${p.id}')">🗑️ Eliminar Producto</button>
+                </div>
+                <div><b>Precio:</b> $${p.precio} MXN</div>
+                ${variantsHtml}
+              </div>
+            `;
+          }).join('');
+        }
+
+        const ordersListContainer = document.getElementById('admin-orders-list');
+        if (!orders.length) {
+          ordersListContainer.innerHTML = '<p style="font-size:.75rem;color:#9ca3af;text-align:center;padding:1rem">No hay pedidos registrados.</p>';
+        } else {
+          ordersListContainer.innerHTML = orders.map(o => {
+            const dir = o.direccion || {};
+            const dirText = `${dir.calle || ''} #${dir.numero_casa || ''}, Col. ${dir.colonia || ''}, ${dir.ciudad || ''}, ${dir.estado_direccion || ''} (C.P. ${dir.codigo_postal || ''})`;
+            
+            return `
+              <div class="order-card-item">
+                <div class="order-header"><span>👤 ${escapeHTML(o.nombre_cliente)} · ${escapeHTML(o.telefono)}</span><span style="color:#db2777">$${Number(o.total || 0).toFixed(2)} MXN</span></div>
+                <div><b>Código:</b> ${escapeHTML(o.codigo)}</div>
+                <div><b>Dirección:</b> ${escapeHTML(dirText)}</div>
+                ${o.referencias ? `<div><b>Notas:</b> ${escapeHTML(o.referencias)}</div>` : ''}
+                <div><b>Estado:</b> ${escapeHTML(o.estado)}</div>
+                ${o.estado === 'pendiente_pago' ? `<button class="btn-save-changes" style="width:100%; margin-top:0.3rem;" onclick="confirmOrderPayment('${o.codigo}')">✅ Confirmar pago y descontar stock</button>` : ''}
+                <div class="order-admin-actions"><button class="btn-delete-order" onclick="deleteOrderFromHistory('${o.codigo}')">🗑️ Borrar pedido</button></div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (e) {}
+    }
+
+    async function updateVariantStock(variantId) {
+      const newStock = parseInt(document.getElementById(`stock-input-${variantId}`).value) || 0;
+      try {
+        const sb = gwRequireSupabase();
+        const { error } = await sb.from('variantes').update({ stock: newStock }).eq('id', variantId);
+        if (error) throw error;
+        await gwLoadSupabaseCatalog();
+        await loadAdminData();
+        alert('¡Stock actualizado correctamente!');
+      } catch (err) { alert('Error al actualizar stock: ' + err.message); }
+    }
+
+    async function updateVariantImages(variantId, productId) {
+      const fileInput = document.getElementById(`shade-file-${variantId}`);
+      const files = fileInput ? fileInput.files : null;
+      if (!files || files.length === 0) { alert("Selecciona al menos una foto."); return; }
+
+      try {
+        let compressedImages = [];
+        for (const f of Array.from(files)) {
+          const res = await compressImage(f);
+          compressedImages.push(res);
+        }
+        const sb = gwRequireSupabase();
+        const { error } = await sb.from('variantes').update({ imagenes: compressedImages }).eq('id', variantId);
+        if (error) throw error;
+
+        await gwLoadSupabaseCatalog();
+        await loadAdminData();
+        alert('¡Fotos del tono guardadas en Supabase!');
+      } catch (err) { alert('Error al guardar imágenes: ' + err.message); }
+    }
+
+    async function deleteProductFromAdmin(productId) {
+      if (!confirm('¿Seguro que deseas eliminar este producto de la tienda?')) return;
+      try {
+        const sb = gwRequireSupabase();
+        const { error } = await sb.from('productos').update({ activo: false }).eq('id', productId);
+        if (error) throw error;
+        await gwLoadSupabaseCatalog();
+        await loadAdminData();
+        alert('Producto eliminado.');
+      } catch (err) { alert('Error al eliminar: ' + err.message); }
+    }
+
+    async function submitCheckout() {
+      if (!cart.length) { alert('Tu carrito está vacío.'); closeCheckout(); return; }
+      try {
+        const sb = gwRequireSupabase();
+        const userName = document.getElementById('checkout-customer').value.trim() || 'Cliente';
+        const phone = document.getElementById('checkout-phone').value.trim();
+        
+        const postal = document.getElementById('checkout-postal').value.trim();
+        const state = document.getElementById('checkout-state').value.trim();
+        const city = document.getElementById('checkout-city').value.trim();
+        const colony = document.getElementById('checkout-colony').value.trim();
+        const street = document.getElementById('checkout-street').value.trim();
+        const house = document.getElementById('checkout-house').value.trim().toUpperCase();
+        const notes = document.getElementById('checkout-notes').value.trim();
+
+        if (!phone || !postal || !street || !city || !state) {
+          throw new Error('Por favor completa todos los datos obligatorios de dirección y contacto.');
+        }
+
+        const address = {
+          codigo_postal: postal,
+          estado_direccion: state,
+          ciudad: city,
+          colonia: colony,
+          calle: street,
+          numero_casa: house,
+          nombre_cliente: userName, 
+          telefono: phone
+        };
+
+        const items = cart.map(item => ({ 
+          producto_id: item.productId, 
+          nombre_tono: item.shade || 'Estándar', 
+          cantidad: Math.max(1, Number(item.quantity) || 1) 
+        }));
+
+        const { data: order, error } = await sb.rpc('glamwar_crear_pedido', { p_direccion: address, p_items: items, p_referencias: notes });
+        if (error) throw error;
+
+        const orderCode = order?.codigo;
+        const total = Number(order?.total || 0);
+
+        let itemsText = cart.map(i => `• ${i.title} (x${i.quantity || 1}) - $${Number(i.price) * Number(i.quantity || 1)} MXN`).join('\n');
+        let fullAddressText = `Calle ${street} #${house}, Col. ${colony}, ${city}, ${state}. C.P. ${postal}`;
+        if (notes) fullAddressText += `\n*Referencias:* ${notes}`;
+
+        const rawMsg = `✨ *NUEVO PEDIDO GLAMWAR* ✨\n\n` +
+          `*Código:* ${orderCode}\n` +
+          `*Cliente:* ${userName}\n` +
+          `*Teléfono:* ${phone}\n\n` +
+          `📍 *DIRECCIÓN DE ENTREGA:*\n${fullAddressText}\n\n` +
+          `🛍️ *PRODUCTOS:*\n${itemsText}\n\n` +
+          `💳 *TOTAL A PAGAR:* $${total.toFixed(2)} MXN\n\n` +
+          `Ya realicé el pedido desde la página web y me dispongo a enviar el comprobante de transferencia. 💗`;
+
+        const msgEscaped = encodeURIComponent(rawMsg);
+
+        cart = []; saveCart(); updateCartUI(); closeCheckout();
+        window.open('https://wa.me/526871996659?text=' + msgEscaped, '_blank');
+        alert(`Pedido ${orderCode} creado correctamente. Se abrió WhatsApp para enviar tu comprobante.`);
+      } catch (err) { alert('No se pudo guardar el pedido: ' + err.message); }
+    }
+
+    async function confirmOrderPayment(orderCode) {
+      if (!confirm(`¿Confirmar pago del pedido ${orderCode}?`)) return;
+      try {
+        const { error } = await gwRequireSupabase().rpc('glamwar_confirmar_pago', { p_codigo: orderCode });
+        if (error) throw error;
+        await gwLoadSupabaseCatalog();
+        await loadAdminData();
+        alert('Pago confirmado con éxito.');
+      } catch (err) { alert('Error: ' + err.message); }
+    }
+
+    async function deleteOrderFromHistory(orderCode) {
+      if (!confirm(`¿Borrar pedido ${orderCode}?`)) return;
+      try {
+        const { error } = await gwRequireSupabase().from('pedidos').delete().eq('codigo', orderCode);
+        if (error) throw error;
+        await loadAdminData();
+        alert('Pedido eliminado.');
+      } catch (err) { alert('Error: ' + err.message); }
+    }
+
+    function showHome() { navigateToView('home'); }
+
+    function filterProducts() {
+      const query = document.getElementById('product-search').value.toLowerCase().trim();
+      const suggestionsBox = document.getElementById('suggestions-box');
+      const cards = document.querySelectorAll('#dynamic-sections-container .product-card');
+
+      if (query === "") { suggestionsBox.style.display = "none"; return; }
+
+      let matches = [];
+      cards.forEach(card => {
+        const name = card.getAttribute('data-name');
+        const brand = card.getAttribute('data-brand');
+        if (name && name.toLowerCase().includes(query)) matches.push({ name, brand });
+      });
+
+      if (matches.length > 0) {
+        suggestionsBox.innerHTML = matches.map(item => `<div class="suggestion-item" onclick="goToProduct('${item.brand}', '${escapeHTML(item.name)}')"><span>${escapeHTML(item.name)}</span><span class="suggestion-brand">${escapeHTML(item.brand.toUpperCase())}</span></div>`).join('');
+        suggestionsBox.style.display = "block";
+      } else {
+        suggestionsBox.innerHTML = `<div class="suggestion-item" style="color: #9ca3af;">No se encontraron productos</div>`;
+        suggestionsBox.style.display = "block";
+      }
+    }
+
+    function goToProduct(brandSlug, productName) {
+      document.getElementById('suggestions-box').style.display = "none";
+      document.getElementById('product-search').value = "";
+      navigateToView('section', brandSlug);
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      addShadeInputRow();
+      if (gwSupabaseConfigured()) {
+        try {
+          const sb = gwRequireSupabase();
+          await gwLoadSupabaseCatalog();
+
+          const { data: { session } } = await sb.auth.getSession();
+          if (session?.user) {
+            const { data: profile } = await sb.from('perfiles').select('rol,nombre').eq('id', session.user.id).maybeSingle();
+            const role = profile?.rol === 'admin' ? 'admin' : 'cliente';
+            openHome(profile?.nombre || session.user.email, role);
+            if (role === 'admin') await loadAdminData();
+          } else {
+            navigateToView('login');
+          }
+        } catch (e) {
+          navigateToView('login');
+          await gwLoadSupabaseCatalog();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
