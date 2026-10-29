@@ -229,6 +229,7 @@
 
       <div class="sidebar-section">
         <h4>Categorías / Marcas</h4>
+        <!-- SPINNER PARA EL MENÚ DE MARCAS SI ESTÁ VACÍO -->
         <div id="sidebar-brand-list" class="brand-nav-list">
           <div style="text-align: center; padding: 0.5rem; color: #db2777; font-size: 0.75rem;">Cargando marcas... ⏳</div>
         </div>
@@ -337,6 +338,7 @@
       ✨ Productos Destacados
     </div>
     
+    <!-- CONTENEDOR DE PRODUCTOS DESTACADOS CON SPINNER INICIAL -->
     <div id="random-products-grid" class="products-container">
       <div class="loading-spinner-container" style="grid-column: span 2;">
         <div class="spinner"></div>
@@ -386,6 +388,7 @@
         </div>
       </div>
 
+      <!-- ALTA DE PRODUCTOS MEJORADA -->
       <div class="admin-section-box">
         <h4>✨ Agregar Nuevo Producto / Colección</h4>
         <div class="admin-form-group">
@@ -421,11 +424,13 @@
         <button id="btn-save-product-action" class="btn-save-new-prod" onclick="addNewProductFromAdmin()">Guardar Producto en Supabase 🚀</button>
       </div>
 
+      <!-- INVENTARIO -->
       <div class="admin-section-box">
         <h4>📦 Inventario, Stock y Fotos por Tono</h4>
         <div id="admin-inventory-list"></div>
       </div>
 
+      <!-- PEDIDOS -->
       <div class="admin-section-box">
         <h4>📦 Historial de Pedidos de Clientes</h4>
         <div id="admin-orders-list" class="order-history-list">
@@ -1390,7 +1395,7 @@
     }
 
     async function submitCheckout() {
-      if (!cart || cart.length === 0) { alert('Tu carrito está vacío.'); closeCheckout(); return; }
+      if (!cart.length) { alert('Tu carrito está vacío.'); closeCheckout(); return; }
       try {
         const sb = gwRequireSupabase();
         const userName = document.getElementById('checkout-customer').value.trim() || 'Cliente';
@@ -1419,16 +1424,11 @@
           telefono: phone
         };
 
-        // ASEGURAR QUE LOS ITEMS VIAJEN CORRECTAMENTE SIN NULOS
         const items = cart.map(item => ({ 
           producto_id: item.productId, 
           nombre_tono: item.shade || 'Estándar', 
           cantidad: Math.max(1, Number(item.quantity) || 1) 
-        })).filter(i => i.producto_id);
-
-        if (items.length === 0) {
-          throw new Error('No hay productos válidos en el carrito.');
-        }
+        }));
 
         const { data: order, error } = await sb.rpc('glamwar_crear_pedido', { p_direccion: address, p_items: items, p_referencias: notes });
         if (error) throw error;
@@ -1437,7 +1437,9 @@
         const total = Number(order?.total || 0);
 
         let itemsText = cart.map(i => `• ${i.title} (x${i.quantity || 1}) - $${Number(i.price) * Number(i.quantity || 1)} MXN`).join('\n');
-        let fullAddressText = `Calle ${street} #${house}, Col. ${colonia}, ${city}, ${state}. C.P. ${postal}`;
+        
+        // CORREGIDO: Se cambió 'colonia' por 'colony' aquí abajo
+        let fullAddressText = `Calle ${street} #${house}, Col. ${colony}, ${city}, ${state}. C.P. ${postal}`;
         if (notes) fullAddressText += `\n*Referencias:* ${notes}`;
 
         const rawMsg = `✨ *NUEVO PEDIDO GLAMWAR* ✨\n\n` +
@@ -1509,11 +1511,13 @@
       navigateToView('section', brandSlug);
     }
 
+    // INICIALIZACIÓN ULTRARRÁPIDA (MILISEGUNDO CERO - CON SPINNERS DE CARGA)
     document.addEventListener('DOMContentLoaded', () => {
       addShadeInputRow();
 
       let catalogLoadedInstantly = false;
 
+      // 1. CARGAR Y PINTAR EL CATÁLOGO DE INMEDIATO DESDE CACHÉ
       try {
         const cachedProducts = localStorage.getItem('gw_cached_products');
         const cachedVariants = localStorage.getItem('gw_cached_variants');
@@ -1532,10 +1536,12 @@
         }
       } catch (e) {}
 
+      // Si no había caché local previa, mostramos login
       if (!catalogLoadedInstantly) {
         navigateToView('login');
       }
 
+      // 2. SINCRONIZAR CON SUPABASE EN SEGUNDO PLANO
       if (gwSupabaseConfigured()) {
         backgroundSyncSupabase(catalogLoadedInstantly);
       }
