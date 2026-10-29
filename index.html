@@ -15,6 +15,19 @@
     }
     @keyframes slowAppear { 0% { opacity: 0; transform: scale(0.98); filter: blur(2px); } 100% { opacity: 1; transform: scale(1); filter: blur(0px); } }
     .animate-slow-appear { animation: slowAppear 0.25s ease-out forwards; }
+    
+    /* ANIMACIÓN DE CARGA (SPINNER) */
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .loading-spinner-container {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 2.5rem 1rem; width: 100%; gap: 0.75rem; font-family: system-ui, -apple-system, sans-serif;
+    }
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid #fbcfe8; border-top: 3px solid #db2777;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    .loading-text { font-size: 0.8rem; color: #db2777; font-weight: 600; letter-spacing: 0.05em; }
+
     .neon-logo-container {
       width: 12rem; height: 12rem; border-radius: 50%; background: #ffffff;
       box-shadow: 0 0 25px rgba(255,255,255,0.9), 0 0 50px #ff69b4, 0 0 90px #ff1493, 0 0 130px rgba(255,105,180,0.5);
@@ -111,7 +124,6 @@
     .shade-sold { background-color: #fef2f2 !important; border-color: #fca5a5 !important; color: #991b1b !important; opacity: 0.7; cursor: not-allowed !important; }
     .badge-sold-tag { font-size: 0.5rem; background: #dc2626; color: white; padding: 0.05rem 0.2rem; border-radius: 2px; font-weight: 700; text-decoration: none !important; display: inline-block; }
     
-    /* CONTROL DE CANTIDAD EN DETALLE DE PRODUCTO */
     .quantity-selector-box { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; background: #fdf2f8; padding: 0.4rem 0.6rem; border-radius: 0.5rem; border: 1px solid #fbcfe8; width: fit-content; }
     .quantity-selector-box label { font-size: 0.75rem; font-weight: 700; color: #374151; }
     .qty-btn { background: #ffffff; border: 1px solid #f472b6; color: #db2777; font-weight: 800; width: 28px; height: 28px; border-radius: 0.4rem; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; }
@@ -217,7 +229,9 @@
 
       <div class="sidebar-section">
         <h4>Categorías / Marcas</h4>
-        <div id="sidebar-brand-list" class="brand-nav-list"></div>
+        <div id="sidebar-brand-list" class="brand-nav-list">
+          <div style="text-align: center; padding: 0.5rem; color: #db2777; font-size: 0.75rem;">Cargando marcas... ⏳</div>
+        </div>
       </div>
     </div>
     <div class="sidebar-footer">
@@ -322,7 +336,13 @@
     <div class="section-title-bar">
       ✨ Productos Destacados
     </div>
-    <div id="random-products-grid" class="products-container"></div>
+    
+    <div id="random-products-grid" class="products-container">
+      <div class="loading-spinner-container" style="grid-column: span 2;">
+        <div class="spinner"></div>
+        <div class="loading-text">Cargando productos exclusivos... 💖</div>
+      </div>
+    </div>
 
     <div class="buttons-container">
       <a href="https://wa.me/526871996659" target="_blank" class="btn-whatsapp">
@@ -366,7 +386,6 @@
         </div>
       </div>
 
-      <!-- ALTA DE PRODUCTOS MEJORADA -->
       <div class="admin-section-box">
         <h4>✨ Agregar Nuevo Producto / Colección</h4>
         <div class="admin-form-group">
@@ -376,7 +395,6 @@
         <div class="admin-form-group">
           <label>Marca / Categoría</label>
           <select id="new-prod-brand-select" class="admin-form-select" onchange="checkNewBrandInput(this)">
-            <!-- Se carga dinámicamente desde Supabase -->
             <option value="other">➕ Escribir nueva marca...</option>
           </select>
           <input type="text" id="new-prod-brand-custom" class="admin-form-input hidden" placeholder="Nombre de la nueva marca..." style="margin-top: 0.4rem;">
@@ -403,13 +421,11 @@
         <button id="btn-save-product-action" class="btn-save-new-prod" onclick="addNewProductFromAdmin()">Guardar Producto en Supabase 🚀</button>
       </div>
 
-      <!-- INVENTARIO -->
       <div class="admin-section-box">
         <h4>📦 Inventario, Stock y Fotos por Tono</h4>
         <div id="admin-inventory-list"></div>
       </div>
 
-      <!-- PEDIDOS -->
       <div class="admin-section-box">
         <h4>📦 Historial de Pedidos de Clientes</h4>
         <div id="admin-orders-list" class="order-history-list">
@@ -480,7 +496,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // CREDENCIALES CONFIGURADAS
     const SUPABASE_URL = "https://mvsyoqobdrmjejrpqbtq.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_if3I5GYNCSEIOPBMjydCJQ_Fevl0cjx";
 
@@ -1022,17 +1037,11 @@
       try {
         const selectEl = document.getElementById('new-prod-brand-select');
         if (!selectEl) return;
-
-        // Extraer marcas únicas de los productos cargados
         const uniqueBrands = [...new Set(productsList.map(p => (p.marca || '').trim()).filter(Boolean))];
-
         let optionsHTML = uniqueBrands.map(b => `<option value="${escapeHTML(b)}">${escapeHTML(b)}</option>`).join('');
         optionsHTML += `<option value="other">➕ Escribir nueva marca...</option>`;
-        
         selectEl.innerHTML = optionsHTML;
-      } catch (e) {
-        console.error("Error cargando marcas en el select:", e);
-      }
+      } catch (e) {}
     }
 
     async function gwLoadSupabaseCatalog() {
@@ -1045,8 +1054,16 @@
 
         if (prodRes.error || !prodRes.data) return false;
 
-        gwRenderCatalog(prodRes.data, varRes.data || []);
-        await loadAdminBrandsDropdown(prodRes.data);
+        const prods = prodRes.data;
+        const vars = varRes.data || [];
+
+        try {
+          localStorage.setItem('gw_cached_products', JSON.stringify(prods));
+          localStorage.setItem('gw_cached_variants', JSON.stringify(vars));
+        } catch (e) {}
+
+        gwRenderCatalog(prods, vars);
+        loadAdminBrandsDropdown(prods);
         return true;
       } catch (e) { return false; }
     }
@@ -1373,7 +1390,7 @@
     }
 
     async function submitCheckout() {
-      if (!cart.length) { alert('Tu carrito está vacío.'); closeCheckout(); return; }
+      if (!cart || cart.length === 0) { alert('Tu carrito está vacío.'); closeCheckout(); return; }
       try {
         const sb = gwRequireSupabase();
         const userName = document.getElementById('checkout-customer').value.trim() || 'Cliente';
@@ -1402,11 +1419,16 @@
           telefono: phone
         };
 
+        // ASEGURAR QUE LOS ITEMS VIAJEN CORRECTAMENTE SIN NULOS
         const items = cart.map(item => ({ 
           producto_id: item.productId, 
           nombre_tono: item.shade || 'Estándar', 
           cantidad: Math.max(1, Number(item.quantity) || 1) 
-        }));
+        })).filter(i => i.producto_id);
+
+        if (items.length === 0) {
+          throw new Error('No hay productos válidos en el carrito.');
+        }
 
         const { data: order, error } = await sb.rpc('glamwar_crear_pedido', { p_direccion: address, p_items: items, p_referencias: notes });
         if (error) throw error;
@@ -1415,7 +1437,7 @@
         const total = Number(order?.total || 0);
 
         let itemsText = cart.map(i => `• ${i.title} (x${i.quantity || 1}) - $${Number(i.price) * Number(i.quantity || 1)} MXN`).join('\n');
-        let fullAddressText = `Calle ${street} #${house}, Col. ${colony}, ${city}, ${state}. C.P. ${postal}`;
+        let fullAddressText = `Calle ${street} #${house}, Col. ${colonia}, ${city}, ${state}. C.P. ${postal}`;
         if (notes) fullAddressText += `\n*Referencias:* ${notes}`;
 
         const rawMsg = `✨ *NUEVO PEDIDO GLAMWAR* ✨\n\n` +
@@ -1487,28 +1509,80 @@
       navigateToView('section', brandSlug);
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
+    document.addEventListener('DOMContentLoaded', () => {
       addShadeInputRow();
-      if (gwSupabaseConfigured()) {
-        try {
-          const sb = gwRequireSupabase();
-          await gwLoadSupabaseCatalog();
 
-          const { data: { session } } = await sb.auth.getSession();
-          if (session?.user) {
-            const { data: profile } = await sb.from('perfiles').select('rol,nombre').eq('id', session.user.id).maybeSingle();
-            const role = profile?.rol === 'admin' ? 'admin' : 'cliente';
-            openHome(profile?.nombre || session.user.email, role);
-            if (role === 'admin') await loadAdminData();
-          } else {
-            navigateToView('login');
+      let catalogLoadedInstantly = false;
+
+      try {
+        const cachedProducts = localStorage.getItem('gw_cached_products');
+        const cachedVariants = localStorage.getItem('gw_cached_variants');
+        if (cachedProducts && cachedVariants) {
+          const prods = JSON.parse(cachedProducts);
+          const vars = JSON.parse(cachedVariants);
+          if (prods.length > 0) {
+            gwRenderCatalog(prods, vars);
+            loadAdminBrandsDropdown(prods);
+            
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('register-view').classList.add('hidden');
+            document.getElementById('home-view').classList.remove('hidden');
+            catalogLoadedInstantly = true;
           }
-        } catch (e) {
-          navigateToView('login');
-          await gwLoadSupabaseCatalog();
         }
+      } catch (e) {}
+
+      if (!catalogLoadedInstantly) {
+        navigateToView('login');
+      }
+
+      if (gwSupabaseConfigured()) {
+        backgroundSyncSupabase(catalogLoadedInstantly);
       }
     });
+
+    async function backgroundSyncSupabase(hasLocalData) {
+      try {
+        const sb = gwRequireSupabase();
+        
+        const [prodRes, varRes, sessionRes] = await Promise.all([
+          sb.from('productos').select('*').eq('activo', true).order('creado_en', { ascending: false }),
+          sb.from('variantes').select('*').eq('activo', true),
+          sb.auth.getSession()
+        ]);
+
+        if (!prodRes.error && prodRes.data) {
+          const prods = prodRes.data;
+          const vars = varRes.data || [];
+
+          try {
+            localStorage.setItem('gw_cached_products', JSON.stringify(prods));
+            localStorage.setItem('gw_cached_variants', JSON.stringify(vars));
+          } catch (e) {}
+
+          gwRenderCatalog(prods, vars);
+          loadAdminBrandsDropdown(prods);
+        }
+
+        const session = sessionRes.data?.session;
+        if (session?.user) {
+          const { data: profile } = await sb.from('perfiles').select('rol,nombre').eq('id', session.user.id).maybeSingle();
+          const role = profile?.rol === 'admin' ? 'admin' : 'cliente';
+          const userName = profile?.nombre || session.user.email;
+          
+          currentUserRole = role;
+          document.getElementById('sidebar-user-name').textContent = userName + (role === "admin" ? " (Admin)" : "");
+          if (role === "admin") {
+            document.getElementById('top-admin-badge').classList.remove('hidden');
+            document.getElementById('admin-sidebar-option').classList.remove('hidden');
+            await loadAdminData();
+          }
+          loadCart(userName);
+        }
+      } catch (e) {
+        console.error("Sincronización de fondo completada con avisos:", e);
+      }
+    }
   </script>
 </body>
 </html>
