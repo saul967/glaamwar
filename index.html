@@ -621,11 +621,21 @@
       navigateToView('section', brandSlug);
     }
 
+    // MEJORADO: Mantener el spinner si aún no hay productos listos para renderizar
     function loadRandomFeaturedProducts() {
       const randomContainer = document.getElementById('random-products-grid');
       if (!randomContainer) return;
+
       const allProductCards = document.querySelectorAll('#dynamic-sections-container .product-card');
-      if (allProductCards.length === 0) return;
+      
+      if (allProductCards.length === 0) {
+        randomContainer.innerHTML = `
+          <div class="loading-spinner-container" style="grid-column: span 2;">
+            <div class="spinner"></div>
+            <div class="loading-text">Cargando productos exclusivos... 💖</div>
+          </div>`;
+        return;
+      }
       
       const cardsArray = Array.from(allProductCards);
       for (let i = cardsArray.length - 1; i > 0; i--) {
@@ -1437,8 +1447,6 @@
         const total = Number(order?.total || 0);
 
         let itemsText = cart.map(i => `• ${i.title} (x${i.quantity || 1}) - $${Number(i.price) * Number(i.quantity || 1)} MXN`).join('\n');
-        
-        // CORREGIDO: Se cambió 'colonia' por 'colony' aquí abajo
         let fullAddressText = `Calle ${street} #${house}, Col. ${colony}, ${city}, ${state}. C.P. ${postal}`;
         if (notes) fullAddressText += `\n*Referencias:* ${notes}`;
 
