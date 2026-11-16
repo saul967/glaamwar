@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>GlamWar Maquillaje - Tienda & Panel Administrador</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       font-family: 'Playfair Display', Georgia, serif;
       background-color: #fdfbf7; color: #2c2c2c;
@@ -16,7 +16,6 @@
     @keyframes slowAppear { 0% { opacity: 0; transform: scale(0.98); filter: blur(2px); } 100% { opacity: 1; transform: scale(1); filter: blur(0px); } }
     .animate-slow-appear { animation: slowAppear 0.25s ease-out forwards; }
     
-    /* ANIMACIÓN DE CARGA (SPINNER) */
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .loading-spinner-container {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -160,26 +159,24 @@
     .btn-add-detail { background: linear-gradient(to right, #ec4899, #db2777); color: #ffffff; font-weight: 600; padding: 0.75rem; border-radius: 0.75rem; border: none; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 10px rgba(236,72,153,0.3); }
     .admin-dashboard-view { width: 100%; background: #ffffff; border: 2px solid #7c3aed; border-radius: 1rem; padding: 1.25rem; box-shadow: 0 10px 20px rgba(124,58,237,0.1); font-family: system-ui, -apple-system, sans-serif; text-align: left; }
     .admin-dashboard-view h2 { color: #6d28d9; font-size: 1.2rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
-    .admin-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.25rem; }
+    .admin-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 1.25rem; }
+    @media(min-width: 600px) { .admin-stats-grid { grid-template-columns: repeat(3, 1fr); } }
     .stat-card { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 0.5rem; padding: 0.6rem; text-align: center; }
-    .stat-number { font-size: 1.1rem; font-weight: 800; color: #6d28d9; }
-    .stat-label { font-size: 0.65rem; color: #5b21b6; font-weight: 600; text-transform: uppercase; }
+    .stat-number { font-size: 1.05rem; font-weight: 800; color: #6d28d9; }
+    .stat-label { font-size: 0.6rem; color: #5b21b6; font-weight: 600; text-transform: uppercase; }
     .admin-section-box { margin-bottom: 1.25rem; background: #faf5ff; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e9d5ff; }
     .admin-section-box h4 { font-size: 0.85rem; color: #6d28d9; margin-bottom: 0.5rem; border-bottom: 1px solid #ddd6fe; padding-bottom: 0.2rem; }
     .order-history-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; overflow-y: auto; }
     .order-card-item { background: #ffffff; border: 1px solid #ddd6fe; border-radius: 0.4rem; padding: 0.6rem; font-size: 0.75rem; display: flex; flex-direction: column; gap: 0.2rem; }
     .order-header { display: flex; justify-content: space-between; font-weight: 700; color: #5b21b6; }
-    .order-date { font-size: 0.65rem; color: #9ca3af; }
     .admin-form-group { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.6rem; }
     .admin-form-group label { font-size: 0.75rem; font-weight: 700; color: #4c1d95; }
     .admin-form-input, .admin-form-select { padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.4rem; font-size: 0.8rem; outline: none; }
     .btn-save-new-prod { background: linear-gradient(to right, #7c3aed, #6d28d9); color: white; border: none; padding: 0.6rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%; font-size: 0.8rem; margin-top: 0.4rem; }
     .btn-save-new-prod:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-save-changes { background: linear-gradient(to right, #059669, #10b981); color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 0.4rem; font-weight: 600; cursor: pointer; font-size: 0.75rem; }
-    .btn-save-changes:hover { opacity: 0.9; }
     .btn-save-imgs { background: linear-gradient(to right, #ec4899, #db2777); color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 0.4rem; font-weight: 600; cursor: pointer; font-size: 0.75rem; }
     .btn-add-shade-row { background: #fdf2f8; border: 1px dashed #db2777; color: #db2777; font-weight: 700; padding: 0.4rem; border-radius: 0.4rem; cursor: pointer; font-size: 0.75rem; width: 100%; margin-top: 0.3rem; }
-    .btn-add-shade-row:hover { background: #fce7f3; }
     .shade-input-card { background: #ffffff; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.5rem; margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.4rem; }
     .shade-input-row { display: flex; gap: 0.4rem; align-items: center; }
     .admin-prod-edit-card { background: #ffffff; border: 1px solid #ddd6fe; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.6rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.75rem; }
@@ -194,10 +191,8 @@
     .promo-main { font-size: clamp(.95rem, 3.5vw, 1.3rem); font-weight: 900; letter-spacing:.015em; line-height:1.35; }
     .promo-sub { margin-top:.2rem; font-size:clamp(.7rem, 2.8vw, .9rem); font-weight:800; color:#9d174d; letter-spacing:.08em; }
     .order-admin-actions { display:flex; gap:.4rem; margin-top:.45rem; flex-wrap:wrap; }
-    .order-admin-actions button { flex:1; min-width:120px; border:0; border-radius:.4rem; padding:.5rem; font-size:.72rem; font-weight:700; cursor:pointer; }
     .btn-delete-order { background:#fee2e2; color:#b91c1c; border:none; border-radius:0.4rem; padding:0.4rem; cursor:pointer; font-weight:600; }
     .cart-nav-btn { border-color:#f3b6d6 !important; background:#fff0f7 !important; color:#be185d !important; }
-    .cart-nav-btn:hover { background:#fce7f3 !important; }
     footer { font-family: system-ui, -apple-system, sans-serif; z-index: 10; text-align: center; font-size: 10px; color: #9ca3af; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.5rem 0; margin-top: 1rem; }
   </style>
 </head>
@@ -229,7 +224,6 @@
 
       <div class="sidebar-section">
         <h4>Categorías / Marcas</h4>
-        <!-- SPINNER PARA EL MENÚ DE MARCAS SI ESTÁ VACÍO -->
         <div id="sidebar-brand-list" class="brand-nav-list">
           <div style="text-align: center; padding: 0.5rem; color: #db2777; font-size: 0.75rem;">Cargando marcas... ⏳</div>
         </div>
@@ -251,7 +245,7 @@
     <div class="auth-form">
       <div class="form-group">
         <label>Correo Electrónico</label>
-        <input type="email" id="login-email" placeholder="ejemplo@correo.com">
+        <input type="email" id="login-email" placeholder="ejemplo@correo.com" autocapitalize="none">
       </div>
       <div class="form-group">
         <label>Contraseña</label>
@@ -282,7 +276,7 @@
       </div>
       <div class="form-group">
         <label>Correo Electrónico</label>
-        <input type="email" id="reg-email" placeholder="ejemplo@correo.com">
+        <input type="email" id="reg-email" placeholder="ejemplo@correo.com" autocapitalize="none">
       </div>
       <div class="form-group">
         <label>Contraseña</label>
@@ -338,7 +332,6 @@
       ✨ Productos Destacados
     </div>
     
-    <!-- CONTENEDOR DE PRODUCTOS DESTACADOS CON SPINNER INICIAL -->
     <div id="random-products-grid" class="products-container">
       <div class="loading-spinner-container" style="grid-column: span 2;">
         <div class="spinner"></div>
@@ -371,7 +364,7 @@
 
     <div class="admin-dashboard-view">
       <h2>👑 Panel de Control GlamWar</h2>
-      <p style="font-size: 0.75rem; color: #6b7280; margin-bottom: 1rem;">Administra productos, tonos, fotos y stock con sincronización permanente en Supabase.</p>
+      <p style="font-size: 0.75rem; color: #6b7280; margin-bottom: 1rem;">Administra productos, tonos, costos de inversión y finanzas con Supabase.</p>
 
       <div class="admin-stats-grid">
         <div class="stat-card">
@@ -380,15 +373,23 @@
         </div>
         <div class="stat-card">
           <div class="stat-number" id="admin-total-sales">$0</div>
-          <div class="stat-label">Ventas Estimadas</div>
+          <div class="stat-label">Ventas Totales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="admin-total-investment">$0</div>
+          <div class="stat-label">Total Invertido</div>
+        </div>
+        <div class="stat-card" style="grid-column: span 2; background: #ede9fe;">
+          <div class="stat-number" id="admin-net-profit" style="color: #5b21b6; font-size: 1.2rem;">$0</div>
+          <div class="stat-label">Ganancia Neta 💰</div>
         </div>
         <div class="stat-card">
           <div class="stat-number" id="admin-total-users">0</div>
-          <div class="stat-label">Clientes Registrados</div>
+          <div class="stat-label">Clientes</div>
         </div>
       </div>
 
-      <!-- ALTA DE PRODUCTOS MEJORADA -->
+      <!-- ALTA DE PRODUCTOS -->
       <div class="admin-section-box">
         <h4>✨ Agregar Nuevo Producto / Colección</h4>
         <div class="admin-form-group">
@@ -404,19 +405,19 @@
         </div>
         <div class="admin-form-group">
           <label>Descripción del Producto</label>
-          <textarea id="new-prod-description" class="admin-form-input" rows="3" placeholder="Describe el producto, sus beneficios y características..."></textarea>
+          <textarea id="new-prod-description" class="admin-form-input" rows="3" placeholder="Describe el producto..."></textarea>
         </div>
         <div class="admin-form-group">
           <label>Características del Producto</label>
-          <textarea id="new-prod-features" class="admin-form-input" rows="3" placeholder="Ej. Acabado mate, larga duración, contenido 60 ml, tipo de piel..."></textarea>
+          <textarea id="new-prod-features" class="admin-form-input" rows="3" placeholder="Ej. Acabado mate, larga duración..."></textarea>
         </div>
         <div class="admin-form-group">
-          <label>Precio ($ MXN)</label>
+          <label>Precio de Venta ($ MXN)</label>
           <input type="number" id="new-prod-price" class="admin-form-input" placeholder="Ej. 250">
         </div>
 
         <div class="admin-form-group">
-          <label>🎨 Tonos, Stock y Fotos por Tono</label>
+          <label>🎨 Tonos, Stock, Costo de Inversión y Fotos</label>
           <div id="new-prod-shades-container"></div>
           <button type="button" class="btn-add-shade-row" onclick="addShadeInputRow()">➕ Agregar Otro Tono / Variante</button>
         </div>
@@ -426,7 +427,7 @@
 
       <!-- INVENTARIO -->
       <div class="admin-section-box">
-        <h4>📦 Inventario, Stock y Fotos por Tono</h4>
+        <h4>📦 Inventario, Stock, Costos y Nuevos Tonos</h4>
         <div id="admin-inventory-list"></div>
       </div>
 
@@ -492,8 +493,8 @@
       <div class="admin-form-group"><label>Ciudad</label><input id="checkout-city" class="admin-form-input" placeholder="Tu ciudad" autocomplete="address-level2" /></div>
       <div class="admin-form-group"><label>Colonia</label><input id="checkout-colony" class="admin-form-input" placeholder="Tu colonia" autocomplete="address-level3" /></div>
       <div class="admin-form-group"><label>Calle</label><input id="checkout-street" class="admin-form-input" placeholder="Nombre de la calle" autocomplete="street-address" /></div>
-      <div class="admin-form-group"><label>Número de casa</label><input id="checkout-house" class="admin-form-input" placeholder="Número exterior o S/N si no tiene" /></div>
-      <div class="admin-form-group"><label>Notas / Referencias (opcional)</label><textarea id="checkout-notes" class="admin-form-input" rows="2" placeholder="Referencias para encontrar tu domicilio, entre calles, etc."></textarea></div>
+      <div class="admin-form-group"><label>Número de casa</label><input id="checkout-house" class="admin-form-input" placeholder="Número exterior o S/N" /></div>
+      <div class="admin-form-group"><label>Notas / Referencias (opcional)</label><textarea id="checkout-notes" class="admin-form-input" rows="2" placeholder="Referencias..."></textarea></div>
       <button class="add-to-cart-btn" style="width:100%" onclick="submitCheckout()">Enviar pedido y datos de transferencia</button>
       <p style="font-size:.78rem;color:#6b7280;margin-top:0.4rem">El stock se reservará formalmente una vez que el administrador confirme la recepción de la transferencia.</p>
     </div>
@@ -621,7 +622,6 @@
       navigateToView('section', brandSlug);
     }
 
-    // MEJORADO: Mantener el spinner si aún no hay productos listos para renderizar
     function loadRandomFeaturedProducts() {
       const randomContainer = document.getElementById('random-products-grid');
       if (!randomContainer) return;
@@ -842,13 +842,12 @@
           return;
         }
         cart[existingIndex].quantity = newQty;
-        alert(`¡Se actualizó la cantidad a ${cart[existingIndex].quantity} unidades de "${finalName}" en tu carrito! 🛍️`);
       } else {
         cart.push({ title: finalName, price: currentDetailProduct.price, productId: currentDetailProduct.productId, shade: shadeName, quantity: currentDetailQuantity });
-        alert(`¡"${finalName}" (×${currentDetailQuantity}) agregado al carrito! 🛍️`);
       }
 
       saveCart(); updateCartUI();
+      alert(`¡"${finalName}" agregado al carrito! 🛍️`);
     }
 
     function addToCartFromCard(button, title, price) {
@@ -864,17 +863,16 @@
       const existingIndex = cart.findIndex(item => item.productId === productId && item.shade === shadeName);
       if (existingIndex > -1) {
         if (cart[existingIndex].quantity + 1 > stock) {
-          alert(`Lo sentimos, solo hay ${stock} unidades disponibles de este tono.`);
+          alert(`Lo sentimos, solo hay ${stock} unidades disponibles.`);
           return;
         }
         cart[existingIndex].quantity += 1;
-        alert(`¡Ahora llevas ${cart[existingIndex].quantity} unidades de "${finalTitle}" en tu carrito! 🛍️`);
       } else {
         cart.push({ title: finalTitle, price, productId, shade: shadeName, quantity: 1 });
-        alert(`¡"${finalTitle}" agregado al carrito! 🛍️`);
       }
 
       saveCart(); updateCartUI();
+      alert(`¡"${finalTitle}" agregado al carrito! 🛍️`);
     }
 
     function changeCartItemQty(index, delta) {
@@ -961,8 +959,9 @@
       card.id = `shade-input-card-${shadeInputCount}`;
       card.innerHTML = `
         <div class="shade-input-row">
-          <input type="text" class="admin-form-input shade-name-input" placeholder="Nombre Tono (ej. Matte, Glow)" style="flex:2;">
+          <input type="text" class="admin-form-input shade-name-input" placeholder="Nombre Tono" style="flex:2;">
           <input type="number" class="admin-form-input shade-stock-input" placeholder="Stock" min="0" value="5" style="flex:1;">
+          <input type="number" class="admin-form-input shade-cost-input" placeholder="Inversión ($)" min="0" value="0" style="flex:1;">
           <button type="button" class="btn-delete-order" style="padding:0.3rem 0.5rem;" onclick="removeShadeInputRow(${shadeInputCount})">✕</button>
         </div>
         <div style="display:flex; flex-direction:column; gap:0.2rem;">
@@ -979,15 +978,11 @@
     }
 
     async function handleRegister() {
-      const nameInput = document.getElementById('reg-name');
-      const emailInput = document.getElementById('reg-email');
-      const passInput = document.getElementById('reg-pass');
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim().toLowerCase();
+      const pass = document.getElementById('reg-pass').value;
       const errorDiv = document.getElementById('reg-error'); 
       if (errorDiv) errorDiv.textContent = '';
-
-      const name = nameInput ? nameInput.value.trim() : '';
-      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
-      const pass = passInput ? passInput.value : '';
 
       try {
         const sb = gwRequireSupabase();
@@ -995,21 +990,17 @@
         if (pass.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
         
         const { data, error } = await sb.auth.signUp({ 
-          email: email, 
-          password: pass, 
+          email, password: pass, 
           options: { data: { nombre: name } } 
         });
-        
         if (error) throw error;
         
         if (data && data.session) {
           openHome(name, 'cliente');
           await gwLoadSupabaseCatalog();
-        } else {
-          if (errorDiv) {
-            errorDiv.style.color = '#047857';
-            errorDiv.textContent = '¡Cuenta creada con éxito! Ya puedes iniciar sesión.';
-          }
+        } else if (errorDiv) {
+          errorDiv.style.color = '#047857';
+          errorDiv.textContent = '¡Cuenta creada con éxito! Ya puedes iniciar sesión.';
         }
       } catch (err) { 
         if (errorDiv) {
@@ -1201,6 +1192,7 @@
         for (const card of shadeCards) {
           const shadeName = card.querySelector('.shade-name-input').value.trim() || 'Estándar';
           const stock = parseInt(card.querySelector('.shade-stock-input').value) || 0;
+          const cost = parseFloat(card.querySelector('.shade-cost-input').value) || 0;
           const fileInput = card.querySelector('.shade-files-input');
           const files = fileInput ? fileInput.files : null;
 
@@ -1218,6 +1210,7 @@
           variantsToInsert.push({
             nombre_tono: shadeName,
             stock: stock,
+            costo: cost,
             imagenes: compressed
           });
         }
@@ -1243,6 +1236,7 @@
           producto_id: prodData.id,
           nombre_tono: v.nombre_tono,
           stock: v.stock,
+          costo: v.costo,
           imagenes: v.imagenes
         }));
 
@@ -1268,6 +1262,31 @@
       }
     }
 
+    // NUEVA FUNCIÓN: Agregar un nuevo tono/variante a un producto ya existente
+    async function addNewVariantToExistingProduct(productId) {
+      const shadeName = prompt("Nombre del nuevo tono o variante:");
+      if (!shadeName || !shadeName.trim()) return;
+      const stock = parseInt(prompt("Cantidad en stock:", "5")) || 0;
+      const cost = parseFloat(prompt("Costo de inversión ($ MXN):", "0")) || 0;
+
+      try {
+        const sb = gwRequireSupabase();
+        const { error } = await sb.from('variantes').insert({
+          producto_id: productId,
+          nombre_tono: shadeName.trim(),
+          stock: stock,
+          costo: cost,
+          imagenes: ['1000064344.png']
+        });
+        if (error) throw error;
+        await gwLoadSupabaseCatalog();
+        await loadAdminData();
+        alert(`¡Tono "${shadeName}" agregado con éxito! Ya puedes asignarle sus fotos en el inventario.`);
+      } catch (err) {
+        alert('Error al agregar tono: ' + err.message);
+      }
+    }
+
     async function loadAdminData() {
       if (currentUserRole !== 'admin') return;
       try {
@@ -1286,8 +1305,18 @@
         const paidSales = orders.filter(o => o.estado === 'pago_confirmado').reduce((s, o) => s + Number(o.total || 0), 0);
         document.getElementById('admin-total-sales').textContent = '$' + paidSales.toLocaleString('es-MX', { minimumFractionDigits: 2 });
 
-        const products = prodRes.data || [];
         const variants = varRes.data || [];
+        
+        // CÁLCULO DE INVERSIÓN Y GANANCIA NETA
+        let totalInvestment = variants.reduce((sum, v) => sum + (Number(v.costo || 0) * Number(v.stock || 0)), 0);
+        document.getElementById('admin-total-investment').textContent = '$' + totalInvestment.toLocaleString('es-MX', { minimumFractionDigits: 2 });
+
+        let netProfit = paidSales - totalInvestment;
+        const profitEl = document.getElementById('admin-net-profit');
+        profitEl.textContent = '$' + netProfit.toLocaleString('es-MX', { minimumFractionDigits: 2 });
+        profitEl.style.color = netProfit >= 0 ? '#059669' : '#dc2626';
+
+        const products = prodRes.data || [];
         const inventoryBox = document.getElementById('admin-inventory-list');
 
         if (!products.length) {
@@ -1303,20 +1332,27 @@
                 <div class="shade-admin-box">
                   <div class="shade-admin-header">
                     <span>Tono: <b>${escapeHTML(v.nombre_tono)}</b></span>
-                    <span>Stock actual: <b>${v.stock} ${v.stock <= 0 ? '<span style="color:#dc2626;">(SOLD OUT)</span>' : ''}</b></span>
+                    <span>Stock: <b>${v.stock}</b> | Inv: <b>$${v.costo || 0}</b></span>
                   </div>
                   
                   <div class="shade-img-preview">${imgsPreviews}</div>
 
                   <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
-                    <input type="number" id="stock-input-${v.id}" class="admin-form-input" style="width:80px;" value="${v.stock}" min="0">
-                    <button class="btn-save-changes" onclick="updateVariantStock('${v.id}')">💾 Guardar Stock</button>
+                    <div style="display:flex; flex-direction:column; gap:0.1rem;">
+                      <label style="font-size:0.6rem; color:#6b7280;">Stock:</label>
+                      <input type="number" id="stock-input-${v.id}" class="admin-form-input" style="width:70px;" value="${v.stock}" min="0">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.1rem;">
+                      <label style="font-size:0.6rem; color:#6b7280;">Inversión ($):</label>
+                      <input type="number" id="cost-input-${v.id}" class="admin-form-input" style="width:85px;" value="${v.costo || 0}" min="0">
+                    </div>
+                    <button class="btn-save-changes" style="margin-top:auto;" onclick="updateVariantStockAndCost('${v.id}')">💾 Guardar</button>
                   </div>
 
                   <div style="display:flex; flex-direction:column; gap:0.3rem; margin-top:0.3rem;">
-                    <label style="font-size:0.68rem; font-weight:700; color:#4c1d95;">Cambiar/Añadir fotos de este tono:</label>
+                    <label style="font-size:0.68rem; font-weight:700; color:#4c1d95;">Fotos de este tono:</label>
                     <input type="file" id="shade-file-${v.id}" class="admin-form-input" accept="image/*" multiple style="font-size:0.7rem;">
-                    <button class="btn-save-imgs" onclick="updateVariantImages('${v.id}', '${p.id}')">🖼️ Guardar Nuevas Fotos</button>
+                    <button class="btn-save-imgs" onclick="updateVariantImages('${v.id}')">🖼️ Guardar Fotos</button>
                   </div>
                 </div>
               `;
@@ -1326,10 +1362,11 @@
               <div class="admin-prod-edit-card">
                 <div class="admin-prod-edit-header">
                   <span>${escapeHTML(p.nombre)} (${escapeHTML(p.marca)})</span>
-                  <button class="btn-delete-order" onclick="deleteProductFromAdmin('${p.id}')">🗑️ Eliminar Producto</button>
+                  <button class="btn-delete-order" onclick="deleteProductFromAdmin('${p.id}')">🗑️ Eliminar</button>
                 </div>
-                <div><b>Precio:</b> $${p.precio} MXN</div>
+                <div><b>Precio venta:</b> $${p.precio} MXN</div>
                 ${variantsHtml}
+                <button type="button" class="btn-add-shade-row" onclick="addNewVariantToExistingProduct('${p.id}')">➕ Agregar otro tono/variante a este producto</button>
               </div>
             `;
           }).join('');
@@ -1359,19 +1396,20 @@
       } catch (e) {}
     }
 
-    async function updateVariantStock(variantId) {
+    async function updateVariantStockAndCost(variantId) {
       const newStock = parseInt(document.getElementById(`stock-input-${variantId}`).value) || 0;
+      const newCost = parseFloat(document.getElementById(`cost-input-${variantId}`).value) || 0;
       try {
         const sb = gwRequireSupabase();
-        const { error } = await sb.from('variantes').update({ stock: newStock }).eq('id', variantId);
+        const { error } = await sb.from('variantes').update({ stock: newStock, costo: newCost }).eq('id', variantId);
         if (error) throw error;
         await gwLoadSupabaseCatalog();
         await loadAdminData();
-        alert('¡Stock actualizado correctamente!');
-      } catch (err) { alert('Error al actualizar stock: ' + err.message); }
+        alert('¡Stock e inversión actualizados correctamente!');
+      } catch (err) { alert('Error al actualizar: ' + err.message); }
     }
 
-    async function updateVariantImages(variantId, productId) {
+    async function updateVariantImages(variantId) {
       const fileInput = document.getElementById(`shade-file-${variantId}`);
       const files = fileInput ? fileInput.files : null;
       if (!files || files.length === 0) { alert("Selecciona al menos una foto."); return; }
@@ -1447,7 +1485,7 @@
         const total = Number(order?.total || 0);
 
         let itemsText = cart.map(i => `• ${i.title} (x${i.quantity || 1}) - $${Number(i.price) * Number(i.quantity || 1)} MXN`).join('\n');
-        let fullAddressText = `Calle ${street} #${house}, Col. ${colony}, ${city}, ${state}. C.P. ${postal}`;
+        let fullAddressText = `Calle ${street} #${house}, Col. ${colonia}, ${city}, ${state}. C.P. ${postal}`;
         if (notes) fullAddressText += `\n*Referencias:* ${notes}`;
 
         const rawMsg = `✨ *NUEVO PEDIDO GLAMWAR* ✨\n\n` +
@@ -1519,13 +1557,11 @@
       navigateToView('section', brandSlug);
     }
 
-    // INICIALIZACIÓN ULTRARRÁPIDA (MILISEGUNDO CERO - CON SPINNERS DE CARGA)
     document.addEventListener('DOMContentLoaded', () => {
       addShadeInputRow();
 
       let catalogLoadedInstantly = false;
 
-      // 1. CARGAR Y PINTAR EL CATÁLOGO DE INMEDIATO DESDE CACHÉ
       try {
         const cachedProducts = localStorage.getItem('gw_cached_products');
         const cachedVariants = localStorage.getItem('gw_cached_variants');
@@ -1544,18 +1580,16 @@
         }
       } catch (e) {}
 
-      // Si no había caché local previa, mostramos login
       if (!catalogLoadedInstantly) {
         navigateToView('login');
       }
 
-      // 2. SINCRONIZAR CON SUPABASE EN SEGUNDO PLANO
       if (gwSupabaseConfigured()) {
-        backgroundSyncSupabase(catalogLoadedInstantly);
+        backgroundSyncSupabase();
       }
     });
 
-    async function backgroundSyncSupabase(hasLocalData) {
+    async function backgroundSyncSupabase() {
       try {
         const sb = gwRequireSupabase();
         
@@ -1593,9 +1627,7 @@
           }
           loadCart(userName);
         }
-      } catch (e) {
-        console.error("Sincronización de fondo completada con avisos:", e);
-      }
+      } catch (e) {}
     }
   </script>
 </body>
