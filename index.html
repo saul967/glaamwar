@@ -84,11 +84,12 @@
     .form-group { display: flex; flex-direction: column; text-align: left; gap: 0.3rem; }
     .form-group label { font-size: 0.8rem; font-weight: 600; color: #374151; }
     .form-group input { padding: 0.75rem; border: 1px solid #f472b6; border-radius: 0.5rem; font-size: 16px; outline: none; }
-    .auth-btn { background: linear-gradient(to right, #ec4899, #db2777); color: #ffffff; font-weight: 600; padding: 0.75rem; border-radius: 0.75rem; border: none; cursor: pointer; font-size: 0.9rem; margin-top: 0.5rem; }
+    .auth-btn { background: linear-gradient(to right, #ec4899, #db2777); color: #ffffff; font-weight: 600; padding: 0.75rem; border-radius: 0.75rem; border: none; cursor: pointer; font-size: 0.9rem; margin-top: 0.5rem; transition: opacity 0.2s; }
+    .auth-btn:disabled { opacity: 0.65; cursor: not-allowed; }
     .btn-guest { background: #ffffff; border: 1px solid #f472b6; color: #db2777; font-weight: 600; padding: 0.6rem; border-radius: 0.75rem; cursor: pointer; font-size: 0.85rem; }
     .switch-auth { font-size: 0.8rem; color: #6b7280; margin-top: 0.2rem; }
     .switch-auth a { color: #db2777; font-weight: 600; text-decoration: none; cursor: pointer; }
-    .error-msg { color: #dc2626; font-size: 0.75rem; min-height: 1rem; }
+    .error-msg { color: #dc2626; font-size: 0.75rem; min-height: 1rem; font-weight: 600; }
     .buttons-container { font-family: system-ui, -apple-system, sans-serif; width: 100%; display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1rem; }
     .btn-whatsapp, .btn-instagram, .btn-tiktok, .btn-back { width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.75rem; font-weight: 600; padding: 0.75rem 1rem; border-radius: 0.75rem; text-decoration: none; font-size: 0.85rem; cursor: pointer; }
     .btn-whatsapp { background: linear-gradient(to right, #ec4899, #db2777); color: #ffffff; border: none; }
@@ -245,8 +246,8 @@
         <input type="password" id="login-pass" placeholder="••••••••">
       </div>
       <div id="login-error" class="error-msg"></div>
-      <button class="auth-btn" onclick="handleLogin()">ENTRAR</button>
-      <button class="btn-guest" onclick="loginAsGuest()">Continuar como Invitado 🛍️</button>
+      <button type="button" id="login-btn" class="auth-btn" onclick="handleLogin()">ENTRAR</button>
+      <button type="button" class="btn-guest" onclick="loginAsGuest()">Continuar como Invitado 🛍️</button>
 
       <div class="switch-auth">
         ¿No tienes cuenta? <a onclick="switchAuth('register')">Regístrate aquí</a>
@@ -276,7 +277,7 @@
         <input type="password" id="reg-pass" placeholder="••••••••">
       </div>
       <div id="reg-error" class="error-msg"></div>
-      <button class="auth-btn" onclick="handleRegister()">REGISTRARSE</button>
+      <button type="button" id="reg-btn" class="auth-btn" onclick="handleRegister()">REGISTRARSE</button>
       <div class="switch-auth">
         ¿Ya tienes cuenta? <a onclick="switchAuth('login')">Inicia sesión</a>
       </div>
@@ -760,7 +761,6 @@
 
       if (stockLabel) {
         const shadeName = element.getAttribute('data-shade') || 'Estándar';
-        // AQUÍ SE OCULTA LA CANTIDAD EXACTA: Solo dice Disponible o Agotado
         stockLabel.textContent = stock > 0 ? `${shadeName} · Disponible` : `${shadeName} · AGOTADO (SOLD OUT)`;
         stockLabel.classList.toggle('out', stock <= 0);
       }
@@ -1089,13 +1089,20 @@
       const name = document.getElementById('reg-name').value.trim();
       const email = document.getElementById('reg-email').value.trim().toLowerCase();
       const pass = document.getElementById('reg-pass').value;
-      const errorDiv = document.getElementById('reg-error'); 
+      const errorDiv = document.getElementById('reg-error');
+      const regBtn = document.getElementById('reg-btn');
+      
       if (errorDiv) errorDiv.textContent = '';
 
       try {
         const sb = gwRequireSupabase();
         if (!name || !email || !pass) throw new Error('Completa todos los campos.');
         if (pass.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
+
+        if (regBtn) {
+          regBtn.disabled = true;
+          regBtn.textContent = 'Creando cuenta... ⏳';
+        }
         
         const { data, error } = await sb.auth.signUp({ 
           email, password: pass, 
@@ -1115,27 +1122,61 @@
           errorDiv.style.color = '#dc2626';
           errorDiv.textContent = err.message || 'Error al registrarte.'; 
         }
+      } finally {
+        if (regBtn) {
+          regBtn.disabled = false;
+          regBtn.textContent = 'REGISTRARSE';
+        }
       }
     }
 
     async function handleLogin() {
       const email = document.getElementById('login-email').value.trim().toLowerCase();
       const pass = document.getElementById('login-pass').value;
-      const errorDiv = document.getElementById('login-error'); errorDiv.textContent = '';
+      const errorDiv = document.getElementById('login-error');
+      const loginBtn = document.getElementById('login-btn');
+      
+      errorDiv.textContent = '';
+
       try {
         const sb = gwRequireSupabase();
         if (!email || !pass) throw new Error('Ingresa tu correo y contraseña.');
+
+        if (loginBtn) {
+          loginBtn.disabled = true;
+          loginBtn.textContent = 'Conectando... ⏳';
+        }
+
         const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
         if (error) throw error;
-        
-        const { data: profile } = await sb.from('perfiles').select('rol,nombre').eq('id', data.user.id).maybeSingle();
-        const role = profile?.rol === 'admin' ? 'admin' : 'cliente';
-        const name = profile?.nombre || data.user.user_metadata?.nombre || email;
-        
+        if (!data?.user) throw new Error('No se pudo obtener la sesión del usuario.');
+
+        // Consultar perfil sin bloquear la entrada si hay restricciones RLS
+        let role = 'cliente';
+        let name = data.user.user_metadata?.nombre || email;
+
+        try {
+          const { data: profile } = await sb.from('perfiles').select('rol,nombre').eq('id', data.user.id).maybeSingle();
+          if (profile) {
+            if (profile.rol === 'admin') role = 'admin';
+            if (profile.nombre) name = profile.nombre;
+          }
+        } catch (profileErr) {
+          console.warn('No se pudo leer perfil, entrando con datos básicos:', profileErr);
+        }
+
         openHome(name, role);
         await gwLoadSupabaseCatalog();
         if (role === 'admin') await loadAdminData();
-      } catch (err) { errorDiv.textContent = err.message || 'Credenciales incorrectas.'; }
+      } catch (err) {
+        console.error('Error en login:', err);
+        errorDiv.textContent = err.message || 'Credenciales incorrectas o error de conexión.';
+      } finally {
+        if (loginBtn) {
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'ENTRAR';
+        }
+      }
     }
 
     function loginAsGuest() {
@@ -1677,9 +1718,16 @@
           const sessionRes = await sb.auth.getSession();
           const session = sessionRes.data?.session;
           if (session?.user) {
-            const { data: profile } = await sb.from('perfiles').select('rol,nombre').eq('id', session.user.id).maybeSingle();
-            const role = profile?.rol === 'admin' ? 'admin' : 'cliente';
-            const userName = profile?.nombre || session.user.email;
+            let role = 'cliente';
+            let userName = session.user.user_metadata?.nombre || session.user.email;
+
+            try {
+              const { data: profile } = await sb.from('perfiles').select('rol,nombre').eq('id', session.user.id).maybeSingle();
+              if (profile) {
+                if (profile.rol === 'admin') role = 'admin';
+                if (profile.nombre) userName = profile.nombre;
+              }
+            } catch (e) {}
             
             currentUserRole = role;
             document.getElementById('sidebar-user-name').textContent = userName + (role === "admin" ? " (Admin)" : "");
