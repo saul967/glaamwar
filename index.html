@@ -168,6 +168,7 @@
     .btn-save-new-prod:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-save-changes { background: linear-gradient(to right, #059669, #10b981); color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 0.4rem; font-weight: 600; cursor: pointer; font-size: 0.75rem; }
     .btn-save-imgs { background: linear-gradient(to right, #ec4899, #db2777); color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 0.4rem; font-weight: 600; cursor: pointer; font-size: 0.75rem; width: 100%; }
+    .btn-save-imgs:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-add-shade-row { background: #fdf2f8; border: 1px dashed #db2777; color: #db2777; font-weight: 700; padding: 0.55rem; border-radius: 0.4rem; cursor: pointer; font-size: 0.75rem; width: 100%; margin-top: 0.3rem; }
     
     .shade-input-card { background: #ffffff; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.6rem; margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.45rem; width: 100%; }
@@ -549,35 +550,72 @@
       return supabaseClient;
     }
 
+    async function readFileAsDataUrlSafe(file) {
+      if (typeof file.arrayBuffer === 'function') {
+        const buf = await file.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let binary = '';
+        const chunkSize = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+        }
+        const mime = file.type || 'image/jpeg';
+        return `data:${mime};base64,${btoa(binary)}`;
+      }
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = () => reject(new Error('No se pudo leer el archivo de imagen.'));
+        reader.readAsDataURL(file);
+      });
+    }
+
     async function uploadImageToSupabaseStorage(file) {
-      if (!file || !file.type.startsWith('image/')) return '1000064344.png';
-      
+      if (!file) return '1000064344.png';
+      if (file.type && !file.type.startsWith('image/')) return '1000064344.png';
+
       try {
         const sb = gwRequireSupabase();
-        const compressedBlob = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
+        const dataUrl = await readFileAsDataUrlSafe(file);
+
+        const uploadPayload = await new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            try {
               const canvas = document.createElement('canvas');
-              let w = img.width, h = img.height;
+              let w = img.width || 800;
+              let h = img.height || 800;
               const maxDim = 800;
               if (w > maxDim || h > maxDim) {
                 if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
                 else { w = Math.round((w * maxDim) / h); h = maxDim; }
               }
-              canvas.width = w; canvas.height = h;
+              canvas.width = w;
+              canvas.height = h;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, w, h);
-              canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', 0.70);
-            };
-            img.src = e.target.result;
+
+              // Convertir a JPEG DataURL y luego a Uint8Array para evitar fallos de Blob en Safari iOS
+              const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.72);
+              const base64Part = jpegDataUrl.split(',')[1];
+              const binStr = atob(base64Part);
+              const len = binStr.length;
+              const uint8 = new Uint8Array(len);
+              for (let i = 0; i < len; i++) {
+                uint8[i] = binStr.charCodeAt(i);
+              }
+              resolve(uint8);
+            } catch (canvasErr) {
+              resolve(file);
+            }
           };
-          reader.readAsDataURL(file);
+          img.onerror = () => resolve(file);
+          img.src = dataUrl;
         });
 
         const fileName = `prod_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.jpg`;
-        const { error } = await sb.storage.from('productos').upload(fileName, compressedBlob, {
+        const { error } = await sb.storage.from('productos').upload(fileName, uploadPayload, {
+          contentType: 'image/jpeg',
           cacheControl: '3600',
           upsert: false
         });
@@ -587,12 +625,8 @@
         const { data: publicUrlData } = sb.storage.from('productos').getPublicUrl(fileName);
         return publicUrlData.publicUrl;
       } catch (err) {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target.result);
-          reader.onerror = () => resolve('1000064344.png');
-          reader.readAsDataURL(file);
-        });
+        console.error('Fallo subida Storage:', err);
+        throw new Error(err?.message || 'No se pudo subir la imagen a Storage.');
       }
     }
 
@@ -617,7 +651,6 @@
       const hash = window.location.hash;
       if (hash.startsWith('#detail-')) {
         const prodId = hash.replace('#detail-', '');
-        // Garantizar que el inicio exista en el historial para poder regresar a toda la tienda
         history.replaceState({ view: 'home', param: null }, '', '#home');
         if (cachedProdsMem.length > 0) {
           openProductDetailById(prodId);
@@ -770,7 +803,6 @@
         const savedCart = localStorage.getItem("cart_" + userName);
         const guestCart = localStorage.getItem("cart_Invitado");
         let parsedUser = savedCart ? JSON.parse(savedCart) : [];
-        // Conservar productos agregados como invitado si el usuario acaba de iniciar sesión
         if (userName !== "Invitado" && guestCart) {
           const parsedGuest = JSON.parse(guestCart);
           if (parsedGuest.length > 0 && parsedUser.length === 0) {
@@ -1059,7 +1091,6 @@
     }
 
     function openCheckout(singleItem = null) {
-      // Exigir inicio de sesión o registro al intentar pedir/comprar
       if (!currentSessionUser) {
         pendingCheckoutSingleItem = singleItem ? singleItem : 'CART';
         document.getElementById('auth-required-notice').classList.remove('hidden');
@@ -1562,7 +1593,7 @@
                 <div style="display:flex; flex-direction:column; gap:0.3rem; margin-top:0.3rem;">
                   <label style="font-size:0.68rem; font-weight:700; color:#4c1d95;">Fotos de este tono:</label>
                   <input type="file" id="shade-file-${v.id}" class="admin-form-input" accept="image/*" multiple style="font-size:0.75rem;">
-                  <button class="btn-save-imgs" onclick="updateVariantImages('${v.id}')">🖼️ Subir Fotos</button>
+                  <button id="btn-upload-img-${v.id}" class="btn-save-imgs" onclick="updateVariantImages('${v.id}')">🖼️ Subir Fotos</button>
                 </div>
               </div>
             `;
@@ -1646,10 +1677,15 @@
 
     async function updateVariantImages(variantId) {
       const fileInput = document.getElementById(`shade-file-${variantId}`);
+      const uploadBtn = document.getElementById(`btn-upload-img-${variantId}`);
       const files = fileInput ? fileInput.files : null;
       if (!files || files.length === 0) { alert("Selecciona al menos una foto."); return; }
 
       try {
+        if (uploadBtn) {
+          uploadBtn.disabled = true;
+          uploadBtn.textContent = 'Subiendo... ⏳';
+        }
         let uploadedUrls = [];
         for (const f of Array.from(files)) {
           const url = await uploadImageToSupabaseStorage(f);
@@ -1662,7 +1698,14 @@
         await gwLoadSupabaseCatalog();
         await loadAdminData(true);
         alert('¡Fotos del tono subidas a Supabase Storage con éxito!');
-      } catch (err) { alert('Error al subir imágenes: ' + err.message); }
+      } catch (err) {
+        alert('Error al subir imágenes: ' + err.message);
+      } finally {
+        if (uploadBtn) {
+          uploadBtn.disabled = false;
+          uploadBtn.textContent = '🖼️ Subir Fotos';
+        }
+      }
     }
 
     async function deleteProductFromAdmin(productId) {
@@ -1796,7 +1839,6 @@
       addShadeInputRow();
       const initialHash = window.location.hash;
 
-      // Iniciar inmediatamente en modo Invitado para que la tienda sea accesible sin login
       updateUserAuthUI('Invitado', 'cliente', false);
       loadCart('Invitado');
 
@@ -1826,7 +1868,6 @@
             if (role === 'admin') await loadAdminData();
           }
 
-          // Proceso ordenado: primero asegurar el catálogo en 'home' y después abrir el producto del enlace directo
           if (initialHash && initialHash.startsWith('#detail-')) {
             const prodId = initialHash.replace('#detail-', '');
             history.replaceState({ view: 'home', param: null }, '', '#home');
