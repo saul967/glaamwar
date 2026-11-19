@@ -550,18 +550,7 @@
       return supabaseClient;
     }
 
-    async function readFileAsDataUrlSafe(file) {
-      if (typeof file.arrayBuffer === 'function') {
-        const buf = await file.arrayBuffer();
-        const bytes = new Uint8Array(buf);
-        let binary = '';
-        const chunkSize = 0x8000;
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-          binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
-        }
-        const mime = file.type || 'image/jpeg';
-        return `data:${mime};base64,${btoa(binary)}`;
-      }
+    function fileToDataUrl(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(e.target.result);
@@ -570,63 +559,70 @@
       });
     }
 
+    async function compressFileToBlobAndDataUrl(file) {
+      const sourceUrl = await fileToDataUrl(file);
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            let w = img.width || 800;
+            let h = img.height || 800;
+            const maxDim = 800;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+              else { w = Math.round((w * maxDim) / h); h = maxDim; }
+            }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const fallbackDataUrl = canvas.toDataURL('image/jpeg', 0.72);
+            canvas.toBlob((blob) => {
+              resolve({ blob: blob || file, fallbackDataUrl });
+            }, 'image/jpeg', 0.72);
+          } catch (e) {
+            resolve({ blob: file, fallbackDataUrl: sourceUrl });
+          }
+        };
+        img.onerror = () => resolve({ blob: file, fallbackDataUrl: sourceUrl });
+        img.src = sourceUrl;
+      });
+    }
+
     async function uploadImageToSupabaseStorage(file) {
       if (!file) return '1000064344.png';
       if (file.type && !file.type.startsWith('image/')) return '1000064344.png';
 
+      const { blob, fallbackDataUrl } = await compressFileToBlobAndDataUrl(file);
+
       try {
         const sb = gwRequireSupabase();
-        const dataUrl = await readFileAsDataUrlSafe(file);
-
-        const uploadPayload = await new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            try {
-              const canvas = document.createElement('canvas');
-              let w = img.width || 800;
-              let h = img.height || 800;
-              const maxDim = 800;
-              if (w > maxDim || h > maxDim) {
-                if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
-                else { w = Math.round((w * maxDim) / h); h = maxDim; }
-              }
-              canvas.width = w;
-              canvas.height = h;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, w, h);
-
-              // Convertir a JPEG DataURL y luego a Uint8Array para evitar fallos de Blob en Safari iOS
-              const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.72);
-              const base64Part = jpegDataUrl.split(',')[1];
-              const binStr = atob(base64Part);
-              const len = binStr.length;
-              const uint8 = new Uint8Array(len);
-              for (let i = 0; i < len; i++) {
-                uint8[i] = binStr.charCodeAt(i);
-              }
-              resolve(uint8);
-            } catch (canvasErr) {
-              resolve(file);
-            }
-          };
-          img.onerror = () => resolve(file);
-          img.src = dataUrl;
-        });
+        await sb.auth.getSession();
 
         const fileName = `prod_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.jpg`;
-        const { error } = await sb.storage.from('productos').upload(fileName, uploadPayload, {
+        const { error } = await sb.storage.from('productos').upload(fileName, blob, {
           contentType: 'image/jpeg',
           cacheControl: '3600',
           upsert: false
         });
 
-        if (error) throw error;
+        if (error) {
+          const msg = String(error.message || '').toLowerCase();
+          if (msg.includes('row-level security') || msg.includes('policy')) {
+            return fallbackDataUrl;
+          }
+          throw error;
+        }
 
         const { data: publicUrlData } = sb.storage.from('productos').getPublicUrl(fileName);
         return publicUrlData.publicUrl;
       } catch (err) {
-        console.error('Fallo subida Storage:', err);
-        throw new Error(err?.message || 'No se pudo subir la imagen a Storage.');
+        const msg = String(err?.message || '').toLowerCase();
+        if (msg.includes('row-level security') || msg.includes('policy') || msg.includes('load failed')) {
+          return fallbackDataUrl;
+        }
+        throw err;
       }
     }
 
@@ -1697,7 +1693,7 @@
 
         await gwLoadSupabaseCatalog();
         await loadAdminData(true);
-        alert('¡Fotos del tono subidas a Supabase Storage con éxito!');
+        alert('¡Fotos del tono guardadas con éxito!');
       } catch (err) {
         alert('Error al subir imágenes: ' + err.message);
       } finally {
