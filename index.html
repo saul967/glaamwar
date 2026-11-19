@@ -67,8 +67,10 @@
     .cart-qty-btn { background: #ffffff; border: 1px solid #f472b6; color: #db2777; font-weight: 700; width: 22px; height: 22px; border-radius: 0.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
     .remove-cart-item { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.85rem; padding: 0.2rem; }
     .cart-total { font-size: 0.85rem; font-weight: 700; display: flex; justify-content: space-between; margin-top: 0.5rem; color: #111827; border-top: 1px dashed #d1d5db; padding-top: 0.5rem; }
-    .sidebar-footer { padding: 1rem; border-top: 1px solid #f3e8ff; background: #fafaf9; }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid #f3e8ff; background: #fafaf9; display: flex; flex-direction: column; gap: 0.5rem; }
     .sidebar-logout { width: 100%; background: #ef4444; color: white; border: none; padding: 0.6rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
+    .sidebar-login-btn { width: 100%; background: linear-gradient(to right, #ec4899, #db2777); color: white; border: none; padding: 0.65rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
+    .sidebar-register-btn { width: 100%; background: #ffffff; color: #db2777; border: 1px solid #f472b6; padding: 0.6rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
     .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 90; display: none; }
     .sidebar-overlay.active { display: block; }
     .search-container { width: 100%; margin-bottom: 1.25rem; font-family: system-ui, -apple-system, sans-serif; position: relative; }
@@ -223,18 +225,26 @@
         </div>
       </div>
     </div>
-    <div class="sidebar-footer">
-      <button class="sidebar-logout" onclick="handleLogout()">Cerrar Sesión</button>
+    <div class="sidebar-footer" id="sidebar-auth-footer">
+      <button id="sidebar-btn-login" class="sidebar-login-btn" onclick="openAuthFromMenu('login')">🔑 Iniciar Sesión</button>
+      <button id="sidebar-btn-register" class="sidebar-register-btn" onclick="openAuthFromMenu('register')">✨ Registrarse</button>
+      <button id="sidebar-btn-logout" class="sidebar-logout hidden" onclick="handleLogout()">Cerrar Sesión</button>
     </div>
   </div>
 
-  <!-- INICIAR SESIÓN -->
-  <div id="login-view" class="auth-container animate-slow-appear">
+  <!-- INICIAR SESIÓN (ACCESIBLE DESDE EL MENÚ O AL PAGAR) -->
+  <div id="login-view" class="auth-container hidden animate-slow-appear">
+    <div class="top-nav-bar" style="margin-bottom: 0.5rem;">
+      <button class="menu-btn" onclick="cancelAuthAndGoBack()">← Volver a la Tienda</button>
+    </div>
     <div class="neon-logo-container" style="width: 9rem; height: 9rem;">
       <img src="logo-glamwar.png" alt="GlamWar Logo" class="logo-img">
     </div>
     <h1>GLAMWAR</h1>
     <p class="subtitle">Iniciar Sesión</p>
+    <p id="auth-required-notice" class="hidden" style="font-family: system-ui, sans-serif; font-size: 0.8rem; color: #be185d; background: #fce7f3; padding: 0.6rem 1rem; border-radius: 0.6rem; margin-bottom: 1rem; border: 1px solid #f9a8d4; font-weight: 600;">
+      💗 Inicia sesión o regístrate para completar tu pedido
+    </p>
 
     <div class="auth-form">
       <div class="form-group">
@@ -247,7 +257,7 @@
       </div>
       <div id="login-error" class="error-msg"></div>
       <button type="button" id="login-btn" class="auth-btn" onclick="handleLogin()">ENTRAR</button>
-      <button type="button" class="btn-guest" onclick="loginAsGuest()">Continuar como Invitado 🛍️</button>
+      <button type="button" class="btn-guest" onclick="cancelAuthAndGoBack()">Seguir viendo como Invitado 🛍️</button>
 
       <div class="switch-auth">
         ¿No tienes cuenta? <a onclick="switchAuth('register')">Regístrate aquí</a>
@@ -257,6 +267,9 @@
 
   <!-- REGISTRO -->
   <div id="register-view" class="auth-container hidden animate-slow-appear">
+    <div class="top-nav-bar" style="margin-bottom: 0.5rem;">
+      <button class="menu-btn" onclick="cancelAuthAndGoBack()">← Volver a la Tienda</button>
+    </div>
     <div class="neon-logo-container" style="width: 9rem; height: 9rem;">
       <img src="logo-glamwar.png" alt="GlamWar Logo" class="logo-img">
     </div>
@@ -284,8 +297,8 @@
     </div>
   </div>
 
-  <!-- CATÁLOGO PRINCIPAL -->
-  <main id="home-view" class="hidden animate-slow-appear">
+  <!-- CATÁLOGO PRINCIPAL (VISIBLE POR DEFECTO) -->
+  <main id="home-view" class="animate-slow-appear">
     <div class="top-nav-bar">
       <button class="menu-btn" onclick="toggleSidebar()">
         <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -512,6 +525,8 @@
     let currentDetailProduct = null;
     let currentDetailQuantity = 1;
     let currentUserRole = "cliente";
+    let currentSessionUser = null;
+    let pendingCheckoutSingleItem = null;
     let shadeInputCount = 0;
 
     let cachedProdsMem = [];
@@ -602,10 +617,10 @@
       const hash = window.location.hash;
       if (hash.startsWith('#detail-')) {
         const prodId = hash.replace('#detail-', '');
+        // Garantizar que el inicio exista en el historial para poder regresar a toda la tienda
+        history.replaceState({ view: 'home', param: null }, '', '#home');
         if (cachedProdsMem.length > 0) {
           openProductDetailById(prodId);
-        } else {
-          setTimeout(() => openProductDetailById(prodId), 600);
         }
       } else if (hash.startsWith('#section-')) {
         const brandSlug = hash.replace('#section-', '');
@@ -614,6 +629,10 @@
         renderViewByState('cart', null, false);
       } else if (hash === '#admin') {
         renderViewByState('admin', null, false);
+      } else if (hash === '#login') {
+        renderViewByState('login', null, false);
+      } else if (hash === '#register') {
+        renderViewByState('register', null, false);
       } else {
         renderViewByState('home', null, false);
       }
@@ -648,20 +667,66 @@
 
     function switchAuth(view) { navigateToView(view); }
 
-    function openHome(name, role = "cliente") {
+    function openAuthFromMenu(view) {
+      toggleSidebar();
+      document.getElementById('auth-required-notice').classList.add('hidden');
+      navigateToView(view);
+    }
+
+    function cancelAuthAndGoBack() {
+      pendingCheckoutSingleItem = null;
+      document.getElementById('auth-required-notice').classList.add('hidden');
+      navigateToView('home');
+    }
+
+    function updateUserAuthUI(name, role = "cliente", isLoggedIn = false) {
       currentUserRole = role;
-      document.getElementById('sidebar-user-name').textContent = name + (role === "admin" ? " (Admin)" : "");
-      if (role === "admin") {
+      currentSessionUser = isLoggedIn ? name : null;
+      localStorage.setItem("glamwar_active_user", isLoggedIn ? name : "Invitado");
+
+      document.getElementById('sidebar-user-name').textContent = isLoggedIn
+        ? name + (role === "admin" ? " (Admin)" : "")
+        : "Invitado 🛍️";
+
+      const btnLogin = document.getElementById('sidebar-btn-login');
+      const btnRegister = document.getElementById('sidebar-btn-register');
+      const btnLogout = document.getElementById('sidebar-btn-logout');
+
+      if (isLoggedIn) {
+        btnLogin.classList.add('hidden');
+        btnRegister.classList.add('hidden');
+        btnLogout.classList.remove('hidden');
+      } else {
+        btnLogin.classList.remove('hidden');
+        btnRegister.classList.remove('hidden');
+        btnLogout.classList.add('hidden');
+      }
+
+      if (isLoggedIn && role === "admin") {
         document.getElementById('top-admin-badge').classList.remove('hidden');
         document.getElementById('admin-sidebar-option').classList.remove('hidden');
       } else {
         document.getElementById('top-admin-badge').classList.add('hidden');
         document.getElementById('admin-sidebar-option').classList.add('hidden');
       }
+    }
+
+    function openHome(name, role = "cliente", isLoggedIn = true) {
+      updateUserAuthUI(name, role, isLoggedIn);
+      loadCart(isLoggedIn ? name : "Invitado");
+
+      if (pendingCheckoutSingleItem !== null) {
+        const itemToBuy = pendingCheckoutSingleItem === 'CART' ? null : pendingCheckoutSingleItem;
+        pendingCheckoutSingleItem = null;
+        document.getElementById('auth-required-notice').classList.add('hidden');
+        navigateToView('home');
+        openCheckout(itemToBuy);
+        return;
+      }
+
       if (!window.location.hash.startsWith('#detail-')) {
         navigateToView('home');
       }
-      loadCart(name);
     }
 
     function toggleSidebar() {
@@ -703,7 +768,17 @@
     function loadCart(userName) {
       try {
         const savedCart = localStorage.getItem("cart_" + userName);
-        cart = savedCart ? JSON.parse(savedCart) : [];
+        const guestCart = localStorage.getItem("cart_Invitado");
+        let parsedUser = savedCart ? JSON.parse(savedCart) : [];
+        // Conservar productos agregados como invitado si el usuario acaba de iniciar sesión
+        if (userName !== "Invitado" && guestCart) {
+          const parsedGuest = JSON.parse(guestCart);
+          if (parsedGuest.length > 0 && parsedUser.length === 0) {
+            parsedUser = parsedGuest;
+            localStorage.removeItem("cart_Invitado");
+          }
+        }
+        cart = parsedUser;
       } catch (e) { cart = []; }
       updateCartUI();
     }
@@ -805,8 +880,7 @@
     function openProductDetail(cardElement) {
       if (!cardElement) return;
       const productId = cardElement.getAttribute('data-id');
-      history.pushState({ view: 'detail', param: productId }, '', `#detail-${productId}`);
-      renderProductDetailById(productId);
+      openProductDetailById(productId);
     }
 
     function openProductDetailById(productId) {
@@ -985,10 +1059,23 @@
     }
 
     function openCheckout(singleItem = null) {
+      // Exigir inicio de sesión o registro al intentar pedir/comprar
+      if (!currentSessionUser) {
+        pendingCheckoutSingleItem = singleItem ? singleItem : 'CART';
+        document.getElementById('auth-required-notice').classList.remove('hidden');
+        navigateToView('login');
+        return;
+      }
+
       if (singleItem) cart = [singleItem];
       if (!cart.length) { alert('Tu carrito está vacío.'); return; }
       const total = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0);
       document.getElementById('checkout-summary').innerHTML = '<h3>Resumen del pedido</h3>' + cart.map(item => `<div style="display:flex;justify-content:space-between;gap:1rem;border-bottom:1px solid #f3f4f6;padding:.45rem 0"><span>${escapeHTML(item.title)} × ${item.quantity || 1}</span><b>$${Number(item.price) * Number(item.quantity || 1)}</b></div>`).join('') + `<h3 style="text-align:right;color:#db2777">Total: $${total} MXN</h3>`;
+      
+      const customerInput = document.getElementById('checkout-customer');
+      if (customerInput && !customerInput.value && currentSessionUser !== 'Invitado') {
+        customerInput.value = currentSessionUser;
+      }
       document.getElementById('checkout-modal').classList.remove('hidden');
     }
 
@@ -1111,8 +1198,8 @@
         if (error) throw error;
         
         if (data && data.session) {
-          openHome(name, 'cliente');
-          await gwLoadSupabaseCatalog();
+          openHome(name, 'cliente', true);
+          if (!cachedProdsMem.length) await gwLoadSupabaseCatalog();
         } else if (errorDiv) {
           errorDiv.style.color = '#047857';
           errorDiv.textContent = '¡Cuenta creada con éxito! Ya puedes iniciar sesión.';
@@ -1151,7 +1238,6 @@
         if (error) throw error;
         if (!data?.user) throw new Error('No se pudo obtener la sesión del usuario.');
 
-        // Consultar perfil sin bloquear la entrada si hay restricciones RLS
         let role = 'cliente';
         let name = data.user.user_metadata?.nombre || email;
 
@@ -1165,8 +1251,8 @@
           console.warn('No se pudo leer perfil, entrando con datos básicos:', profileErr);
         }
 
-        openHome(name, role);
-        await gwLoadSupabaseCatalog();
+        openHome(name, role, true);
+        if (!cachedProdsMem.length) await gwLoadSupabaseCatalog();
         if (role === 'admin') await loadAdminData();
       } catch (err) {
         console.error('Error en login:', err);
@@ -1179,13 +1265,12 @@
       }
     }
 
-    function loginAsGuest() {
-      currentUserRole = 'cliente'; openHome('Invitado', 'cliente');
-    }
-
     async function handleLogout() {
       try { if (supabaseClient) await supabaseClient.auth.signOut(); } catch (err) {}
-      currentUserRole = 'cliente'; navigateToView('login');
+      updateUserAuthUI('Invitado', 'cliente', false);
+      loadCart('Invitado');
+      toggleSidebar();
+      navigateToView('home');
     }
 
     async function loadAdminBrandsDropdown(productsList = []) {
@@ -1213,7 +1298,6 @@
           saveCatalogCacheSafe(prods, vars);
           gwRenderCatalog(prods, vars);
           loadAdminBrandsDropdown(prods);
-          parseUrlHashAndRender();
           return true;
         }
       } catch (e) { return false; }
@@ -1710,12 +1794,20 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       addShadeInputRow();
-      navigateToView('login');
+      const initialHash = window.location.hash;
+
+      // Iniciar inmediatamente en modo Invitado para que la tienda sea accesible sin login
+      updateUserAuthUI('Invitado', 'cliente', false);
+      loadCart('Invitado');
 
       if (gwSupabaseConfigured()) {
         try {
           const sb = gwRequireSupabase();
-          const sessionRes = await sb.auth.getSession();
+          const [sessionRes] = await Promise.all([
+            sb.auth.getSession(),
+            gwLoadSupabaseCatalog()
+          ]);
+
           const session = sessionRes.data?.session;
           if (session?.user) {
             let role = 'cliente';
@@ -1728,18 +1820,21 @@
                 if (profile.nombre) userName = profile.nombre;
               }
             } catch (e) {}
-            
-            currentUserRole = role;
-            document.getElementById('sidebar-user-name').textContent = userName + (role === "admin" ? " (Admin)" : "");
-            if (role === "admin") {
-              document.getElementById('top-admin-badge').classList.remove('hidden');
-              document.getElementById('admin-sidebar-option').classList.remove('hidden');
-            }
+
+            updateUserAuthUI(userName, role, true);
             loadCart(userName);
-            openHome(userName, role);
+            if (role === 'admin') await loadAdminData();
           }
-          await gwLoadSupabaseCatalog();
-          if (currentUserRole === 'admin') await loadAdminData();
+
+          // Proceso ordenado: primero asegurar el catálogo en 'home' y después abrir el producto del enlace directo
+          if (initialHash && initialHash.startsWith('#detail-')) {
+            const prodId = initialHash.replace('#detail-', '');
+            history.replaceState({ view: 'home', param: null }, '', '#home');
+            renderViewByState('home', null, false);
+            openProductDetailById(prodId);
+          } else if (initialHash) {
+            parseUrlHashAndRender();
+          }
         } catch (e) {}
       }
     });
