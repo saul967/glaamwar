@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>GlamWar Maquillaje - Tienda & Panel Administrador</title>
   <link rel="preconnect" href="https://mvsyoqobdrmjejrpqbtq.supabase.co" crossorigin>
   <link rel="dns-prefetch" href="https://mvsyoqobdrmjejrpqbtq.supabase.co">
@@ -12,9 +12,10 @@
     body {
       font-family: 'Playfair Display', Georgia, serif;
       background-color: #fdfbf7; color: #2c2c2c;
-      overflow-x: hidden; min-height: 100vh;
+      overflow-x: hidden; min-height: 100vh; min-height: 100dvh;
       display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-      padding: 1.5rem; position: relative;
+      padding: 1.5rem; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+      position: relative; -webkit-text-size-adjust: 100%;
     }
     @keyframes slowAppear { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: translateY(0); } }
     .animate-slow-appear { animation: slowAppear 0.16s ease-out forwards; }
@@ -48,11 +49,11 @@
     .hidden { display: none !important; }
     h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem; color: #111827; }
     .subtitle { font-family: system-ui, -apple-system, sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.25em; color: #db2777; margin-bottom: 1.25rem; font-weight: 600; }
-    .top-nav-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; z-index: 30; font-family: system-ui, -apple-system, sans-serif; }
-    .menu-btn { background: #ffffff; border: 1px solid #fbcfe8; padding: 0.5rem 0.75rem; border-radius: 0.5rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; color: #db2777; font-weight: 600; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(236,72,153,0.1); }
+    .top-nav-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; z-index: 30; font-family: system-ui, -apple-system, sans-serif; }
+    .menu-btn { background: #ffffff; border: 1px solid #fbcfe8; padding: 0.5rem 0.7rem; border-radius: 0.5rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; color: #db2777; font-weight: 600; font-size: 0.78rem; box-shadow: 0 2px 5px rgba(236,72,153,0.1); touch-action: manipulation; }
     .menu-btn:hover { background: #fdf2f8; }
-    .admin-badge-tag { background: #7c3aed; color: white; font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-weight: 700; text-transform: uppercase; cursor: pointer; }
-    .sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: #ffffff; box-shadow: 5px 0 15px rgba(0,0,0,0.1); z-index: 100; transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; font-family: system-ui, -apple-system, sans-serif; text-align: left; }
+    .admin-badge-tag { background: #7c3aed; color: white; font-size: 0.7rem; padding: 0.45rem 0.65rem; border-radius: 0.5rem; font-weight: 700; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem; box-shadow: 0 2px 6px rgba(124,58,237,0.25); touch-action: manipulation; }
+    .sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; height: 100dvh; background: #ffffff; box-shadow: 5px 0 15px rgba(0,0,0,0.1); z-index: 100; transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; font-family: system-ui, -apple-system, sans-serif; text-align: left; }
     .sidebar.open { left: 0; }
     .sidebar-header { padding: 1.25rem; background: linear-gradient(to right, #fdf2f8, #fce7f3); border-bottom: 1px solid #fbcfe8; display: flex; justify-content: space-between; align-items: center; }
     .sidebar-header h3 { font-size: 1rem; color: #be185d; }
@@ -71,7 +72,7 @@
     .cart-qty-btn { background: #ffffff; border: 1px solid #f472b6; color: #db2777; font-weight: 700; width: 22px; height: 22px; border-radius: 0.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
     .remove-cart-item { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.85rem; padding: 0.2rem; }
     .cart-total { font-size: 0.85rem; font-weight: 700; display: flex; justify-content: space-between; margin-top: 0.5rem; color: #111827; border-top: 1px dashed #d1d5db; padding-top: 0.5rem; }
-    .sidebar-footer { padding: 1rem; border-top: 1px solid #f3e8ff; background: #fafaf9; display: flex; flex-direction: column; gap: 0.5rem; }
+    .sidebar-footer { padding: 1rem; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); border-top: 1px solid #f3e8ff; background: #fafaf9; display: flex; flex-direction: column; gap: 0.5rem; }
     .sidebar-logout { width: 100%; background: #ef4444; color: white; border: none; padding: 0.6rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
     .sidebar-login-btn { width: 100%; background: linear-gradient(to right, #ec4899, #db2777); color: white; border: none; padding: 0.65rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
     .sidebar-register-btn { width: 100%; background: #ffffff; color: #db2777; border: 1px solid #f472b6; padding: 0.6rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
@@ -217,7 +218,7 @@
     .order-header { display: flex; justify-content: space-between; font-weight: 700; color: #5b21b6; }
     .admin-form-group { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.65rem; width: 100%; }
     .admin-form-group label { font-size: 0.75rem; font-weight: 700; color: #4c1d95; }
-    .admin-form-input, .admin-form-select { width: 100%; max-width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.4rem; font-size: 15px; outline: none; background: #fff; }
+    .admin-form-input, .admin-form-select { width: 100%; max-width: 100%; padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 0.4rem; font-size: 16px; outline: none; background: #fff; }
     .btn-save-new-prod { background: linear-gradient(to right, #7c3aed, #6d28d9); color: white; border: none; padding: 0.7rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; width: 100%; font-size: 0.85rem; margin-top: 0.4rem; }
     .btn-save-new-prod:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-save-changes { background: linear-gradient(to right, #059669, #10b981); color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 0.4rem; font-weight: 600; cursor: pointer; font-size: 0.75rem; }
@@ -304,11 +305,11 @@
     <div class="auth-form">
       <div class="form-group">
         <label>Correo Electrónico</label>
-        <input type="email" id="login-email" placeholder="ejemplo@correo.com" autocapitalize="none">
+        <input type="email" id="login-email" placeholder="ejemplo@correo.com" autocapitalize="none" autocomplete="email">
       </div>
       <div class="form-group">
         <label>Contraseña</label>
-        <input type="password" id="login-pass" placeholder="••••••••">
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
       </div>
       <div id="login-error" class="error-msg"></div>
       <button type="button" id="login-btn" class="auth-btn" onclick="handleLogin()">ENTRAR</button>
@@ -334,15 +335,15 @@
     <div class="auth-form">
       <div class="form-group">
         <label>Nombre Completo</label>
-        <input type="text" id="reg-name" placeholder="Tu nombre">
+        <input type="text" id="reg-name" placeholder="Tu nombre" autocomplete="name">
       </div>
       <div class="form-group">
         <label>Correo Electrónico</label>
-        <input type="email" id="reg-email" placeholder="ejemplo@correo.com" autocapitalize="none">
+        <input type="email" id="reg-email" placeholder="ejemplo@correo.com" autocapitalize="none" autocomplete="email">
       </div>
       <div class="form-group">
         <label>Contraseña</label>
-        <input type="password" id="reg-pass" placeholder="••••••••">
+        <input type="password" id="reg-pass" placeholder="••••••••" autocomplete="new-password">
       </div>
       <div id="reg-error" class="error-msg"></div>
       <button type="button" id="reg-btn" class="auth-btn" onclick="handleRegister()">REGISTRARSE</button>
@@ -409,15 +410,15 @@
     </div>
 
     <div class="buttons-container">
-      <a href="https://wa.me/526871996659" target="_blank" class="btn-whatsapp">
+      <a href="https://wa.me/526871996659" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
         <svg style="width: 1.25rem; height: 1.25rem; fill: currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
         CONTACTAR POR WHATSAPP
       </a>
-      <a href="https://instagram.com/glam.war" target="_blank" class="btn-instagram">
+      <a href="https://instagram.com/glam.war" target="_blank" rel="noopener noreferrer" class="btn-instagram">
         <svg style="width: 1.25rem; height: 1.25rem; stroke: #db2777;" fill="none" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
         INSTAGRAM @glam.war
       </a>
-      <a href="https://www.tiktok.com/@glam.war?_r=1&_t=ZS-9AnveV1fSD3" target="_blank" class="btn-tiktok">
+      <a href="https://www.tiktok.com/@glam.war?_r=1&_t=ZS-9AnveV1fSD3" target="_blank" rel="noopener noreferrer" class="btn-tiktok">
         <svg style="width: 1.25rem; height: 1.25rem; fill: #db2777;" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.82.56-1.32 1.54-1.33 2.53-.02 1.14.59 2.22 1.58 2.76.92.51 2.07.56 3.03.11.88-.41 1.5-1.24 1.69-2.19.08-.43.12-.87.12-1.31V.02z"/></svg>
         TIKTOK @glam.war
       </a>
@@ -592,6 +593,7 @@
     let pendingCheckoutSingleItem = null;
     let shadeInputCount = 0;
     let catalogLoadPromise = null;
+    let sessionSyncPromise = null;
 
     let cachedProdsMem = [];
     let cachedVarsMem = [];
@@ -1298,11 +1300,18 @@
       totalPriceEl.textContent = `$${total}`;
     }
 
-    function openAdminDashboard() {
+    async function openAdminDashboard() {
       if (document.getElementById('sidebar').classList.contains('open')) {
         toggleSidebar();
       }
-      if (currentUserRole !== "admin") { alert("Acceso denegado. Solo administradores."); return; }
+      if (currentUserRole !== "admin") {
+        await syncSessionAndProfile(true);
+      }
+      if (currentUserRole !== "admin") {
+        alert("Acceso denegado. Inicia sesión con tu cuenta de administrador.");
+        navigateToView('login');
+        return;
+      }
       navigateToView('admin');
     }
 
@@ -1400,6 +1409,37 @@
         }
       } catch (profileErr) {}
       return { role, name };
+    }
+
+    async function syncSessionAndProfile(forceRefreshCatalog = false) {
+      if (!gwSupabaseConfigured()) return null;
+      if (sessionSyncPromise) return sessionSyncPromise;
+      sessionSyncPromise = (async () => {
+        try {
+          const sb = gwRequireSupabase();
+          const { data } = await sb.auth.getSession();
+          const session = data?.session;
+          if (session?.user) {
+            const { role, name } = await resolveUserProfile(sb, session.user);
+            updateUserAuthUI(name, role, true);
+            loadCart(name);
+            if (forceRefreshCatalog) await ensureCatalogLoaded();
+            if (role === 'admin' && !document.getElementById('admin-view').classList.contains('hidden')) {
+              await loadAdminData(true);
+            }
+            return { role, name };
+          } else {
+            updateUserAuthUI('Invitado', 'cliente', false);
+            loadCart('Invitado');
+            return null;
+          }
+        } catch (e) {
+          return null;
+        } finally {
+          sessionSyncPromise = null;
+        }
+      })();
+      return sessionSyncPromise;
     }
 
     async function handleLogin() {
@@ -2076,6 +2116,18 @@
       const suggestionsBox = document.getElementById('suggestions-box');
       if (searchBox && suggestionsBox && !searchBox.contains(event.target)) {
         suggestionsBox.style.display = 'none';
+      }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && gwSupabaseConfigured()) {
+        syncSessionAndProfile(true);
+      }
+    });
+
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted && gwSupabaseConfigured()) {
+        syncSessionAndProfile(true);
       }
     });
 
