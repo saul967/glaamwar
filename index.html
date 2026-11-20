@@ -1407,13 +1407,13 @@
       try {
         const sb = gwRequireSupabase();
         const [prodRes, varRes] = await Promise.all([
-          sb.from('productos').select('id,nombre,marca,precio,imagenes,descripcion,caracteristicas,creado_en').eq('activo', true).order('creado_en', { ascending: false }),
-          sb.from('variantes').select('id,producto_id,nombre_tono,stock,costo,imagenes').eq('activo', true)
+          sb.from('productos').select('*'),
+          sb.from('variantes').select('*')
         ]);
 
         if (!prodRes.error && prodRes.data) {
-          const prods = prodRes.data;
-          const vars = varRes.data || [];
+          const prods = prodRes.data.filter(p => p.activo !== false);
+          const vars = (varRes.data || []).filter(v => v.activo !== false);
           saveCatalogCacheSafe(prods, vars);
           gwRenderCatalog(prods, vars);
           loadAdminBrandsDropdown(prods);
@@ -1630,7 +1630,7 @@
       }
     }
 
-    function renderAdminInventoryUI(products, variants, orders, usersCount) {
+    function renderAdminInventoryUI(products, variants, orders, usersCount, errorMessage = '') {
       document.getElementById('admin-total-orders').textContent = String(orders.length);
       document.getElementById('admin-total-users').textContent = String(usersCount || 0);
 
@@ -1646,7 +1646,9 @@
       profitEl.style.color = netProfit >= 0 ? '#059669' : '#dc2626';
 
       const inventoryBox = document.getElementById('admin-inventory-list');
-      if (!products.length) {
+      if (errorMessage) {
+        inventoryBox.innerHTML = `<p style="font-size: 0.75rem; color: #dc2626; text-align: center; padding: 1rem;">Error al cargar inventario: ${escapeHTML(errorMessage)}</p>`;
+      } else if (!products.length) {
         inventoryBox.innerHTML = `<p style="font-size: 0.75rem; color: #9ca3af; text-align: center; padding: 1rem;">No hay productos guardados en la base de datos.</p>`;
       } else {
         inventoryBox.innerHTML = products.map(p => {
@@ -1725,27 +1727,40 @@
     async function loadAdminData(forceRefresh = false) {
       if (currentUserRole !== 'admin') return;
 
+      const inventoryBox = document.getElementById('admin-inventory-list');
+      if (inventoryBox) {
+        inventoryBox.innerHTML = `
+          <div class="loading-spinner-container">
+            <div class="spinner"></div>
+            <div class="loading-text">Cargando inventario...</div>
+          </div>`;
+      }
+
       try {
         const sb = gwRequireSupabase();
         const [ordersRes, usersRes, prodRes, varRes] = await Promise.all([
           sb.from('pedidos').select('*').order('creado_en', { ascending: false }),
           sb.from('perfiles').select('id', { count: 'exact', head: true }),
-          sb.from('productos').select('*').eq('activo', true).order('creado_en'),
-          sb.from('variantes').select('*').eq('activo', true)
+          sb.from('productos').select('*'),
+          sb.from('variantes').select('*')
         ]);
+
+        if (prodRes.error) {
+          throw new Error(prodRes.error.message || 'Error consultando productos');
+        }
+        if (varRes.error) {
+          throw new Error(varRes.error.message || 'Error consultando variantes');
+        }
 
         const orders = ordersRes.data || [];
         const usersCount = usersRes.count || 0;
-        const prods = prodRes.data || [];
-        const vars = varRes.data || [];
+        const prods = (prodRes.data || []).filter(p => p.activo !== false);
+        const vars = (varRes.data || []).filter(v => v.activo !== false);
         saveCatalogCacheSafe(prods, vars);
 
         renderAdminInventoryUI(prods, vars, orders, usersCount);
       } catch (e) {
-        const inventoryBox = document.getElementById('admin-inventory-list');
-        if (inventoryBox) {
-          inventoryBox.innerHTML = `<p style="font-size: 0.75rem; color: #dc2626; text-align: center; padding: 1rem;">Error al cargar inventario.</p>`;
-        }
+        renderAdminInventoryUI([], [], [], 0, e.message || 'No se pudo cargar el inventario.');
       }
     }
 
