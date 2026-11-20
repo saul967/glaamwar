@@ -51,7 +51,7 @@
     .top-nav-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; z-index: 30; font-family: system-ui, -apple-system, sans-serif; }
     .menu-btn { background: #ffffff; border: 1px solid #fbcfe8; padding: 0.5rem 0.75rem; border-radius: 0.5rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; color: #db2777; font-weight: 600; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(236,72,153,0.1); }
     .menu-btn:hover { background: #fdf2f8; }
-    .admin-badge-tag { background: #7c3aed; color: white; font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-weight: 700; text-transform: uppercase; }
+    .admin-badge-tag { background: #7c3aed; color: white; font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-weight: 700; text-transform: uppercase; cursor: pointer; }
     .sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: #ffffff; box-shadow: 5px 0 15px rgba(0,0,0,0.1); z-index: 100; transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; font-family: system-ui, -apple-system, sans-serif; text-align: left; }
     .sidebar.open { left: 0; }
     .sidebar-header { padding: 1.25rem; background: linear-gradient(to right, #fdf2f8, #fce7f3); border-bottom: 1px solid #fbcfe8; display: flex; justify-content: space-between; align-items: center; }
@@ -287,7 +287,7 @@
     </div>
   </div>
 
-  <!-- INICIAR SESIÓN (ACCESIBLE DESDE EL MENÚ O AL PAGAR) -->
+  <!-- INICIAR SESIÓN -->
   <div id="login-view" class="auth-container hidden animate-slow-appear">
     <div class="top-nav-bar" style="margin-bottom: 0.5rem;">
       <button class="menu-btn" onclick="cancelAuthAndGoBack()">← Volver a la Tienda</button>
@@ -352,7 +352,7 @@
     </div>
   </div>
 
-  <!-- CATÁLOGO PRINCIPAL (VISIBLE POR DEFECTO) -->
+  <!-- CATÁLOGO PRINCIPAL -->
   <main id="home-view" class="animate-slow-appear">
     <div class="top-nav-bar">
       <button class="menu-btn" onclick="toggleSidebar()">
@@ -363,7 +363,7 @@
         🛒 Carrito (<span id="cart-badge">0</span>)
       </button>
       <div id="top-admin-badge" class="hidden">
-        <span class="admin-badge-tag">Admin 👑</span>
+        <span class="admin-badge-tag" onclick="openAdminDashboard()">Admin 👑</span>
       </div>
     </div>
 
@@ -581,6 +581,7 @@
   <script>
     const SUPABASE_URL = "https://mvsyoqobdrmjejrpqbtq.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_if3I5GYNCSEIOPBMjydCJQ_Fevl0cjx";
+    const CATALOG_CACHE_KEY = "glamwar_catalog_cache_v1";
 
     let supabaseClient = null;
     let cart = [];
@@ -590,6 +591,7 @@
     let currentSessionUser = null;
     let pendingCheckoutSingleItem = null;
     let shadeInputCount = 0;
+    let catalogLoadPromise = null;
 
     let cachedProdsMem = [];
     let cachedVarsMem = [];
@@ -702,6 +704,45 @@
       cachedProdsMem = prods;
       cachedVarsMem = vars;
       rebuildVariantIndex(vars);
+      try {
+        const compactProds = prods.slice(0, 120).map(p => ({
+          id: p.id,
+          nombre: p.nombre,
+          marca: p.marca,
+          precio: p.precio,
+          descripcion: p.descripcion,
+          caracteristicas: p.caracteristicas,
+          activo: p.activo,
+          imagenes: Array.isArray(p.imagenes) ? p.imagenes.filter(u => typeof u === 'string' && !u.startsWith('data:')).slice(0, 4) : []
+        }));
+        const compactVars = vars.slice(0, 400).map(v => ({
+          id: v.id,
+          producto_id: v.producto_id,
+          nombre_tono: v.nombre_tono,
+          stock: v.stock,
+          costo: v.costo,
+          activo: v.activo,
+          imagenes: Array.isArray(v.imagenes) ? v.imagenes.filter(u => typeof u === 'string' && !u.startsWith('data:')).slice(0, 3) : []
+        }));
+        localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify({ prods: compactProds, vars: compactVars }));
+      } catch (e) {}
+    }
+
+    function restoreCatalogFromLocalCache() {
+      try {
+        const raw = localStorage.getItem(CATALOG_CACHE_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.prods) && parsed.prods.length > 0) {
+          cachedProdsMem = parsed.prods;
+          cachedVarsMem = Array.isArray(parsed.vars) ? parsed.vars : [];
+          rebuildVariantIndex(cachedVarsMem);
+          gwRenderCatalog(cachedProdsMem, cachedVarsMem);
+          loadAdminBrandsDropdown(cachedProdsMem);
+          return true;
+        }
+      } catch (e) {}
+      return false;
     }
 
     window.addEventListener('popstate', (event) => {
@@ -712,7 +753,9 @@
 
     function navigateToView(viewName, param = null) {
       const hashStr = param ? `#${viewName}-${param}` : `#${viewName}`;
-      history.pushState({ view: viewName, param: param }, '', hashStr);
+      if (window.location.hash !== hashStr) {
+        history.pushState({ view: viewName, param: param }, '', hashStr);
+      }
       renderViewByState(viewName, param, true);
     }
 
@@ -751,8 +794,13 @@
 
       if (viewName === 'login') document.getElementById('login-view').classList.remove('hidden');
       else if (viewName === 'register') document.getElementById('register-view').classList.remove('hidden');
-      else if (viewName === 'home') { document.getElementById('home-view').classList.remove('hidden'); loadRandomFeaturedProducts(); }
-      else if (viewName === 'section' && param) {
+      else if (viewName === 'home') {
+        document.getElementById('home-view').classList.remove('hidden');
+        const randomContainer = document.getElementById('random-products-grid');
+        if (randomContainer && randomContainer.querySelectorAll('.product-card').length === 0 && cachedProdsMem.length > 0) {
+          loadRandomFeaturedProducts();
+        }
+      } else if (viewName === 'section' && param) {
         const sec = document.getElementById('section-' + param);
         if (sec) sec.classList.remove('hidden');
         else document.getElementById('home-view').classList.remove('hidden');
@@ -995,7 +1043,10 @@
       openProductDetailById(productId);
     }
 
-    function openProductDetailById(productId, targetVariantId = null) {
+    async function openProductDetailById(productId, targetVariantId = null) {
+      if (!cachedProdsMem.length) {
+        await ensureCatalogLoaded();
+      }
       const p = cachedProdsMem.find(prod => String(prod.id) === String(productId));
       if (!p) {
         navigateToView('home');
@@ -1248,7 +1299,9 @@
     }
 
     function openAdminDashboard() {
-      toggleSidebar();
+      if (document.getElementById('sidebar').classList.contains('open')) {
+        toggleSidebar();
+      }
       if (currentUserRole !== "admin") { alert("Acceso denegado. Solo administradores."); return; }
       navigateToView('admin');
     }
@@ -1318,7 +1371,7 @@
         
         if (data && data.session) {
           openHome(name, 'cliente', true);
-          if (!cachedProdsMem.length) await gwLoadSupabaseCatalog();
+          await ensureCatalogLoaded();
         } else if (errorDiv) {
           errorDiv.style.color = '#047857';
           errorDiv.textContent = '¡Cuenta creada con éxito! Ya puedes iniciar sesión.';
@@ -1334,6 +1387,19 @@
           regBtn.textContent = 'REGISTRARSE';
         }
       }
+    }
+
+    async function resolveUserProfile(sb, user) {
+      let role = 'cliente';
+      let name = user.user_metadata?.nombre || user.email;
+      try {
+        const { data: profile } = await sb.from('perfiles').select('rol,nombre').eq('id', user.id).maybeSingle();
+        if (profile) {
+          if (profile.rol === 'admin') role = 'admin';
+          if (profile.nombre) name = profile.nombre;
+        }
+      } catch (profileErr) {}
+      return { role, name };
     }
 
     async function handleLogin() {
@@ -1357,24 +1423,11 @@
         if (error) throw error;
         if (!data?.user) throw new Error('No se pudo obtener la sesión del usuario.');
 
-        let role = 'cliente';
-        let name = data.user.user_metadata?.nombre || email;
-
-        try {
-          const { data: profile } = await sb.from('perfiles').select('rol,nombre').eq('id', data.user.id).maybeSingle();
-          if (profile) {
-            if (profile.rol === 'admin') role = 'admin';
-            if (profile.nombre) name = profile.nombre;
-          }
-        } catch (profileErr) {
-          console.warn('No se pudo leer perfil, entrando con datos básicos:', profileErr);
-        }
-
+        const { role, name } = await resolveUserProfile(sb, data.user);
         openHome(name, role, true);
-        if (!cachedProdsMem.length) await gwLoadSupabaseCatalog();
-        if (role === 'admin') await loadAdminData();
+        await ensureCatalogLoaded();
+        if (role === 'admin') await loadAdminData(true);
       } catch (err) {
-        console.error('Error en login:', err);
         errorDiv.textContent = err.message || 'Credenciales incorrectas o error de conexión.';
       } finally {
         if (loginBtn) {
@@ -1419,7 +1472,19 @@
           loadAdminBrandsDropdown(prods);
           return true;
         }
-      } catch (e) { return false; }
+        return false;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function ensureCatalogLoaded() {
+      if (!gwSupabaseConfigured()) return Promise.resolve(false);
+      if (catalogLoadPromise) return catalogLoadPromise;
+      catalogLoadPromise = gwLoadSupabaseCatalog().finally(() => {
+        catalogLoadPromise = null;
+      });
+      return catalogLoadPromise;
     }
 
     function gwSlug(val) { 
@@ -1587,7 +1652,7 @@
         const { error: varError } = await sb.from('variantes').insert(finalVariants);
         if (varError) throw varError;
 
-        await gwLoadSupabaseCatalog();
+        await ensureCatalogLoaded();
         await loadAdminData(true);
         alert('¡Producto y tonos creados exitosamente en Supabase! 🚀');
 
@@ -1622,7 +1687,7 @@
           imagenes: ['1000064344.png']
         });
         if (error) throw error;
-        await gwLoadSupabaseCatalog();
+        await ensureCatalogLoaded();
         await loadAdminData(true);
         alert(`¡Tono "${shadeName}" agregado con éxito! Ya puedes asignarle sus fotos en el inventario.`);
       } catch (err) {
@@ -1771,7 +1836,7 @@
         const sb = gwRequireSupabase();
         const { error } = await sb.from('variantes').update({ stock: newStock, costo: newCost }).eq('id', variantId);
         if (error) throw error;
-        await gwLoadSupabaseCatalog();
+        await ensureCatalogLoaded();
         await loadAdminData(true);
         alert('¡Stock e inversión actualizados correctamente!');
       } catch (err) { alert('Error al actualizar: ' + err.message); }
@@ -1797,7 +1862,7 @@
         const { error } = await sb.from('variantes').update({ imagenes: uploadedUrls }).eq('id', variantId);
         if (error) throw error;
 
-        await gwLoadSupabaseCatalog();
+        await ensureCatalogLoaded();
         await loadAdminData(true);
         alert('¡Fotos del tono guardadas con éxito!');
       } catch (err) {
@@ -1816,7 +1881,7 @@
         const sb = gwRequireSupabase();
         const { error } = await sb.from('productos').update({ activo: false }).eq('id', productId);
         if (error) throw error;
-        await gwLoadSupabaseCatalog();
+        await ensureCatalogLoaded();
         await loadAdminData(true);
         alert('Producto eliminado.');
       } catch (err) { alert('Error al eliminar: ' + err.message); }
@@ -1890,7 +1955,7 @@
       try {
         const { error } = await gwRequireSupabase().rpc('glamwar_confirmar_pago', { p_codigo: orderCode });
         if (error) throw error;
-        await gwLoadSupabaseCatalog();
+        await ensureCatalogLoaded();
         await loadAdminData(true);
         alert('Pago confirmado con éxito.');
       } catch (err) { alert('Error: ' + err.message); }
@@ -2020,30 +2085,36 @@
 
       updateUserAuthUI('Invitado', 'cliente', false);
       loadCart('Invitado');
+      restoreCatalogFromLocalCache();
 
       if (gwSupabaseConfigured()) {
         try {
           const sb = gwRequireSupabase();
+
+          sb.auth.onAuthStateChange(async (event, session) => {
+            if (session?.user) {
+              const { role, name } = await resolveUserProfile(sb, session.user);
+              updateUserAuthUI(name, role, true);
+              loadCart(name);
+              if (role === 'admin' && !document.getElementById('admin-view').classList.contains('hidden')) {
+                await loadAdminData(true);
+              }
+            } else if (event === 'SIGNED_OUT') {
+              updateUserAuthUI('Invitado', 'cliente', false);
+              loadCart('Invitado');
+            }
+          });
+
           const [sessionRes] = await Promise.all([
             sb.auth.getSession(),
-            gwLoadSupabaseCatalog()
+            ensureCatalogLoaded()
           ]);
 
           const session = sessionRes.data?.session;
           if (session?.user) {
-            let role = 'cliente';
-            let userName = session.user.user_metadata?.nombre || session.user.email;
-
-            try {
-              const { data: profile } = await sb.from('perfiles').select('rol,nombre').eq('id', session.user.id).maybeSingle();
-              if (profile) {
-                if (profile.rol === 'admin') role = 'admin';
-                if (profile.nombre) userName = profile.nombre;
-              }
-            } catch (e) {}
-
-            updateUserAuthUI(userName, role, true);
-            loadCart(userName);
+            const { role, name } = await resolveUserProfile(sb, session.user);
+            updateUserAuthUI(name, role, true);
+            loadCart(userNameOr(name));
             if (role === 'admin') await loadAdminData();
           }
 
@@ -2051,13 +2122,17 @@
             const prodId = initialHash.replace('#detail-', '');
             history.replaceState({ view: 'home', param: null }, '', '#home');
             renderViewByState('home', null, false);
-            openProductDetailById(prodId);
+            await openProductDetailById(prodId);
           } else if (initialHash) {
             parseUrlHashAndRender();
           }
         } catch (e) {}
       }
     });
+
+    function userNameOr(val) {
+      return val || 'Invitado';
+    }
   </script>
 </body>
 </html>
