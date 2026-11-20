@@ -414,7 +414,7 @@
       <button class="menu-btn" onclick="cancelAuthAndGoBack()">← Volver a la Tienda</button>
     </div>
     <div class="neon-logo-container" style="width: 9rem; height: 9rem;">
-      <img src="logo-glamwar.png" alt="GlamWar Logo" class="logo-img" decoding="async">
+      <img src="logo-glamwar.png" alt="GlamWar Logo" class="logo-img" decoding="async" onerror="handleImgError(this)">
     </div>
     <h1>GLAMWAR</h1>
     <p class="subtitle">Iniciar Sesión</p>
@@ -447,7 +447,7 @@
       <button class="menu-btn" onclick="cancelAuthAndGoBack()">← Volver a la Tienda</button>
     </div>
     <div class="neon-logo-container" style="width: 9rem; height: 9rem;">
-      <img src="logo-glamwar.png" alt="GlamWar Logo" class="logo-img" decoding="async">
+      <img src="logo-glamwar.png" alt="GlamWar Logo" class="logo-img" decoding="async" onerror="handleImgError(this)">
     </div>
     <h1>GLAMWAR</h1>
     <p class="subtitle">Crear Cuenta</p>
@@ -489,7 +489,7 @@
     </div>
 
     <div class="neon-logo-container">
-      <img src="logo-glamwar.png" alt="GlamWar Maquillaje Logo" class="logo-img" decoding="async">
+      <img src="logo-glamwar.png" alt="GlamWar Maquillaje Logo" class="logo-img" decoding="async" onerror="handleImgError(this)">
     </div>
 
     <h1>¡TU LOOK EMPIEZA AQUÍ!</h1>
@@ -703,7 +703,7 @@
     const SUPABASE_URL = "https://mvsyoqobdrmjejrpqbtq.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_if3I5GYNCSEIOPBMjydCJQ_Fevl0cjx";
     const CATALOG_CACHE_KEY = "glamwar_catalog_cache_v1";
-    const DEFAULT_FALLBACK_IMG = "1000064344.png";
+    const DEFAULT_FALLBACK_IMG = "logo-glamwar.png";
 
     let supabaseClient = null;
     let cart = [];
@@ -790,11 +790,12 @@
       return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     }
 
+    // Mantiene visibles todas las imágenes reales (URLs y data:image) sin reemplazarlas por rutas rotas
     function sanitizeImgSrc(src, fallback = DEFAULT_FALLBACK_IMG) {
       if (typeof src !== 'string') return fallback;
       const trimmed = src.trim();
       if (!trimmed) return fallback;
-      if (trimmed.startsWith('data:image')) return fallback;
+      if (trimmed === '1000064344.png') return fallback;
       return trimmed;
     }
 
@@ -804,6 +805,12 @@
         .map(u => sanitizeImgSrc(u, ''))
         .filter(Boolean);
       return cleaned.length ? cleaned : [fallback];
+    }
+
+    function handleImgError(imgEl) {
+      if (!imgEl || imgEl.dataset.fallbackApplied === '1') return;
+      imgEl.dataset.fallbackApplied = '1';
+      imgEl.src = DEFAULT_FALLBACK_IMG;
     }
 
     function gwSupabaseConfigured() {
@@ -1184,6 +1191,7 @@
         const cardImg = card.querySelector('.product-img');
         if (cardImg) {
           cardImg.decoding = 'async';
+          cardImg.dataset.fallbackApplied = '0';
           cardImg.src = images[0];
         }
       }
@@ -1243,12 +1251,15 @@
       if (!mainImgTag || !thumbsContainer) return;
       const safeList = sanitizeImgList(images, DEFAULT_FALLBACK_IMG);
       mainImgTag.decoding = 'async';
+      mainImgTag.dataset.fallbackApplied = '0';
       mainImgTag.src = safeList[0];
-      thumbsContainer.innerHTML = safeList.map((img, idx) => `<img src="${escapeHTML(img)}" alt="Foto ${idx + 1}" class="detail-thumb ${idx === 0 ? 'active-thumb' : ''}" decoding="async" onclick="changeMainImage(this.src, this)">`).join('');
+      thumbsContainer.innerHTML = safeList.map((img, idx) => `<img src="${escapeHTML(img)}" alt="Foto ${idx + 1}" class="detail-thumb ${idx === 0 ? 'active-thumb' : ''}" decoding="async" onerror="handleImgError(this)" onclick="changeMainImage(this.src, this)">`).join('');
     }
 
     function changeMainImage(imgSrc, thumbElement) {
-      document.getElementById('detail-main-img-tag').src = sanitizeImgSrc(imgSrc);
+      const mainImg = document.getElementById('detail-main-img-tag');
+      mainImg.dataset.fallbackApplied = '0';
+      mainImg.src = sanitizeImgSrc(imgSrc);
       thumbElement.parentNode.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active-thumb'));
       thumbElement.classList.add('active-thumb');
     }
@@ -1306,7 +1317,7 @@
       const detailContent = document.getElementById('detail-card-content');
       detailContent.innerHTML = `
         <div class="detail-gallery">
-          <img src="${escapeHTML(defaultImages[0])}" alt="${escapeHTML(title)}" class="detail-main-img" id="detail-main-img-tag" decoding="async">
+          <img src="${escapeHTML(defaultImages[0])}" alt="${escapeHTML(title)}" class="detail-main-img" id="detail-main-img-tag" decoding="async" onerror="handleImgError(this)">
           <div class="detail-thumbs" id="detail-thumbs-container"></div>
         </div>
         <div class="detail-info">
@@ -1810,7 +1821,7 @@
 
         card.innerHTML = `
           <div class="product-card-top">
-            <img src="${escapeHTML(firstAvailableImg)}" alt="${escapeHTML(p.nombre)}" class="product-img" loading="${imgLoadingMode}" decoding="async">
+            <img src="${escapeHTML(firstAvailableImg)}" alt="${escapeHTML(p.nombre)}" class="product-img" loading="${imgLoadingMode}" decoding="async" onerror="handleImgError(this)">
             <div class="product-header">
               <div class="product-title">${escapeHTML(p.nombre)}</div>
               <div class="product-price">$${Number(p.precio || 0).toFixed(2)}</div>
@@ -1979,7 +1990,7 @@
           const pVariants = variantsByProductMap.get(String(p.id)) || [];
           const variantsHtml = pVariants.map(v => {
             const currentImgs = sanitizeImgList(Array.isArray(v.imagenes) && v.imagenes.length ? v.imagenes : (p.imagenes || []), DEFAULT_FALLBACK_IMG);
-            const imgsPreviews = currentImgs.map(img => `<img src="${escapeHTML(img)}" alt="preview" loading="lazy" decoding="async">`).join('');
+            const imgsPreviews = currentImgs.map(img => `<img src="${escapeHTML(img)}" alt="preview" loading="lazy" decoding="async" onerror="handleImgError(this)">`).join('');
 
             return `
               <div class="shade-admin-box">
@@ -2303,7 +2314,7 @@
       if (matches.length > 0) {
         suggestionsBox.innerHTML = matches.slice(0, 20).map(item => `
           <div class="suggestion-item" onclick="selectSearchProduct('${escapeHTML(item.productId)}', '${escapeHTML(item.variantId || '')}')">
-            <img src="${escapeHTML(item.thumb)}" alt="${escapeHTML(item.name)}" class="suggestion-thumb" loading="lazy" decoding="async">
+            <img src="${escapeHTML(item.thumb)}" alt="${escapeHTML(item.name)}" class="suggestion-thumb" loading="lazy" decoding="async" onerror="handleImgError(this)">
             <div class="suggestion-details">
               <div class="suggestion-title-row">
                 <span class="suggestion-brand-bold">${escapeHTML(item.brand)}</span>
