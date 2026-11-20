@@ -29,6 +29,28 @@
       z-index: 1;
     }
 
+    /* SANTA ROSA CON BOLSAS GLAMWAR EN EL FONDO TOTAL DE LA PÁGINA */
+    .santa-bags-bg-wrap {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      user-select: none;
+      z-index: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .santa-bags-bg-svg {
+      width: min(94vw, 560px);
+      height: auto;
+      max-height: 78dvh;
+      opacity: 0.24;
+      transform: translateY(4%);
+      filter: saturate(1.05) drop-shadow(0 8px 24px rgba(219, 39, 119, 0.14));
+      pointer-events: none;
+    }
+
     /* SERIE DE LUCES NAVIDEÑAS PANDEADA */
     .holiday-lights-bar {
       position: fixed;
@@ -366,6 +388,141 @@
   </style>
 </head>
 <body>
+  <div class="bg-glow"></div>
+
+  <!-- SANTA EN TRAJE ROSA CON LUNARES SOSTENIENDO BOLSAS GLAMWAR EN AMBAS MANOS (FONDO FIJO) -->
+  <div class="santa-bags-bg-wrap" aria-hidden="true">
+    <svg class="santa-bags-bg-svg" viewBox="0 0 600 620" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- BOLSAS IZQUIERDAS SOSTENIDAS POR LA MANO IZQUIERDA DE SANTA -->
+      <g id="bags-left">
+        <!-- Asas doradas entorchadas (bolsas izquierdas) -->
+        <path d="M168 380 C158 318, 185 288, 206 380" stroke="#d4af37" stroke-width="5.5" stroke-linecap="round"/>
+        <path d="M180 380 C172 325, 196 298, 214 380" stroke="#b8860b" stroke-width="4" stroke-linecap="round"/>
+        <path d="M116 392 C104 332, 132 302, 152 392" stroke="#d4af37" stroke-width="5.5" stroke-linecap="round"/>
+        <!-- Bolsa trasera izquierda -->
+        <polygon points="108,392 224,392 238,548 94,548" fill="#f59eb8" stroke="#c0567a" stroke-width="3.5" stroke-linejoin="round"/>
+        <path d="M138 394 Q158 408 176 394" stroke="#b5446b" stroke-width="4" fill="none"/>
+        <!-- Bolsa principal izquierda con moño satinado y sello GlamWar -->
+        <polygon points="82,406 198,406 212,566 68,566" fill="#fbb6cb" stroke="#be5276" stroke-width="3.8" stroke-linejoin="round"/>
+        <!-- Listón / moño satinado rosa -->
+        <path d="M124 408 L102 396 L112 414 Z" fill="#e07a9c" stroke="#a64365" stroke-width="2"/>
+        <path d="M148 408 L170 396 L160 414 Z" fill="#e07a9c" stroke="#a64365" stroke-width="2"/>
+        <ellipse cx="136" cy="409" rx="11" ry="6" fill="#ec8dab" stroke="#a64365" stroke-width="2.2"/>
+        <!-- Detalles dorados de bolsa -->
+        <path d="M92 452 Q115 436 122 465" stroke="#dfb95c" stroke-width="2.5" fill="none"/>
+        <circle cx="140" cy="494" r="32" fill="#ffffff" stroke="#d9a7b8" stroke-width="2.2"/>
+        <path d="M130 481 Q140 474 150 481 M133 488 Q137 486 139 488 M141 488 Q144 486 147 488 M136 495 Q140 498 144 495" stroke="#6b4c57" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <text x="140" y="510" text-anchor="middle" fill="#3b2830" font-size="8.2" font-weight="800" font-family="Georgia, serif">GLAMWAR</text>
+        <text x="140" y="519" text-anchor="middle" fill="#8b6b78" font-size="5.6" font-family="sans-serif">@glam.war</text>
+      </g>
+
+      <!-- BOLSAS DERECHAS SOSTENIDAS POR LA MANO DERECHA DE SANTA -->
+      <g id="bags-right">
+        <!-- Asas doradas entorchadas (bolsas derechas) -->
+        <path d="M402 380 C412 318, 440 288, 452 380" stroke="#d4af37" stroke-width="5.5" stroke-linecap="round"/>
+        <path d="M454 392 C466 332, 494 302, 504 392" stroke="#d4af37" stroke-width="5.5" stroke-linecap="round"/>
+        <path d="M442 392 C454 338, 480 310, 490 392" stroke="#b8860b" stroke-width="4" stroke-linecap="round"/>
+        <!-- Bolsa trasera derecha -->
+        <polygon points="376,392 492,392 506,548 362,548" fill="#f59eb8" stroke="#c0567a" stroke-width="3.5" stroke-linejoin="round"/>
+        <!-- Bolsa principal derecha con moño satinado y sello GlamWar -->
+        <polygon points="402,406 518,406 532,566 388,566" fill="#fbb6cb" stroke="#be5276" stroke-width="3.8" stroke-linejoin="round"/>
+        <!-- Listón / moño satinado rosa -->
+        <path d="M444 408 L422 396 L432 414 Z" fill="#e07a9c" stroke="#a64365" stroke-width="2"/>
+        <path d="M468 408 L490 396 L480 414 Z" fill="#e07a9c" stroke="#a64365" stroke-width="2"/>
+        <ellipse cx="456" cy="409" rx="11" ry="6" fill="#ec8dab" stroke="#a64365" stroke-width="2.2"/>
+        <!-- Detalles dorados y sello -->
+        <path d="M482 448 Q502 436 508 462" stroke="#dfb95c" stroke-width="2.5" fill="none"/>
+        <circle cx="460" cy="494" r="32" fill="#ffffff" stroke="#d9a7b8" stroke-width="2.2"/>
+        <path d="M450 481 Q460 474 470 481 M453 488 Q457 486 459 488 M461 488 Q464 486 467 488 M456 495 Q460 498 464 495" stroke="#6b4c57" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <text x="460" y="510" text-anchor="middle" fill="#3b2830" font-size="8.2" font-weight="800" font-family="Georgia, serif">GLAMWAR</text>
+        <text x="460" y="519" text-anchor="middle" fill="#8b6b78" font-size="5.6" font-family="sans-serif">@glam.war</text>
+      </g>
+
+      <!-- CUERPO Y TRAJE ROSA CON LUNARES DE SANTA -->
+      <g id="santa-body">
+        <!-- Botas / zapatos cafés -->
+        <ellipse cx="256" cy="542" rx="34" ry="18" fill="#8b5a4b" stroke="#5b3a30" stroke-width="3.5"/>
+        <ellipse cx="344" cy="542" rx="34" ry="18" fill="#8b5a4b" stroke="#5b3a30" stroke-width="3.5"/>
+
+        <!-- Abrigo / túnica rosa con lunares blancos -->
+        <path d="M214 316 C188 360, 184 460, 198 524 L402 524 C416 460, 412 360, 386 316 Z" fill="#f49ac1" stroke="#b85682" stroke-width="4" stroke-linejoin="round"/>
+        <!-- Solapas blancas del abrigo -->
+        <path d="M276 318 L266 522 L242 522 L254 318 Z" fill="#fff5f9" stroke="#d488ab" stroke-width="2.5"/>
+        <path d="M324 318 L334 522 L358 522 L346 318 Z" fill="#fff5f9" stroke="#d488ab" stroke-width="2.5"/>
+        <!-- Borde inferior blanco -->
+        <path d="M195 512 Q300 532 405 512 L407 534 Q300 552 193 534 Z" fill="#fff7fa" stroke="#d488ab" stroke-width="2.8"/>
+
+        <!-- Lunares blancos en el abrigo -->
+        <circle cx="222" cy="368" r="9" fill="#ffffff" opacity="0.92"/>
+        <circle cx="212" cy="432" r="11" fill="#ffffff" opacity="0.92"/>
+        <circle cx="226" cy="488" r="8" fill="#ffffff" opacity="0.92"/>
+        <circle cx="378" cy="368" r="9" fill="#ffffff" opacity="0.92"/>
+        <circle cx="388" cy="432" r="11" fill="#ffffff" opacity="0.92"/>
+        <circle cx="374" cy="488" r="8" fill="#ffffff" opacity="0.92"/>
+        <circle cx="300" cy="462" r="10" fill="#ffffff" opacity="0.92"/>
+        <circle cx="292" cy="500" r="7" fill="#ffffff" opacity="0.92"/>
+
+        <!-- Cinturón café y hebilla dorada -->
+        <path d="M194 404 Q300 424 406 404 L406 428 Q300 448 194 428 Z" fill="#9c6348" stroke="#693e2b" stroke-width="3"/>
+        <rect x="280" y="406" width="40" height="32" rx="6" fill="#f7c85c" stroke="#9e6b19" stroke-width="3.5"/>
+        <rect x="290" y="414" width="20" height="16" rx="3" fill="#9c6348" stroke="#9e6b19" stroke-width="2.5"/>
+
+        <!-- Brazo izquierdo estirado sosteniendo bolsas -->
+        <path d="M220 326 L165 374 L188 396 L242 356 Z" fill="#f49ac1" stroke="#b85682" stroke-width="3.8" stroke-linejoin="round"/>
+        <circle cx="226" cy="340" r="7" fill="#ffffff" opacity="0.9"/>
+        <circle cx="192" cy="366" r="6" fill="#ffffff" opacity="0.9"/>
+        <!-- Puño blanco y guante rosa izquierdo -->
+        <ellipse cx="174" cy="386" rx="18" ry="13" transform="rotate(-35 174 386)" fill="#fff7fa" stroke="#d488ab" stroke-width="2.8"/>
+        <circle cx="160" cy="396" r="17" fill="#f49ac1" stroke="#b85682" stroke-width="3.5"/>
+
+        <!-- Brazo derecho estirado sosteniendo bolsas -->
+        <path d="M380 326 L435 374 L412 396 L358 356 Z" fill="#f49ac1" stroke="#b85682" stroke-width="3.8" stroke-linejoin="round"/>
+        <circle cx="374" cy="340" r="7" fill="#ffffff" opacity="0.9"/>
+        <circle cx="408" cy="366" r="6" fill="#ffffff" opacity="0.9"/>
+        <!-- Puño blanco y guante rosa derecho -->
+        <ellipse cx="426" cy="386" rx="18" ry="13" transform="rotate(35 426 386)" fill="#fff7fa" stroke="#d488ab" stroke-width="2.8"/>
+        <circle cx="440" cy="396" r="17" fill="#f49ac1" stroke="#b85682" stroke-width="3.5"/>
+      </g>
+
+      <!-- CABEZA, BARBA Y GORRO ROSA CON LUNARES DE SANTA -->
+      <g id="santa-head">
+        <!-- Rostro -->
+        <ellipse cx="300" cy="244" rx="58" ry="50" fill="#ffd9cc" stroke="#c88d7c" stroke-width="3.2"/>
+        <!-- Mejillas rosadas -->
+        <ellipse cx="258" cy="256" rx="14" ry="8" fill="#f79bb8" opacity="0.7"/>
+        <ellipse cx="342" cy="256" rx="14" ry="8" fill="#f79bb8" opacity="0.7"/>
+        <!-- Ojos y cejas -->
+        <circle cx="278" cy="236" r="6.5" fill="#2d2226"/>
+        <circle cx="276" cy="233.5" r="2.2" fill="#ffffff"/>
+        <circle cx="322" cy="236" r="6.5" fill="#2d2226"/>
+        <circle cx="320" cy="233.5" r="2.2" fill="#ffffff"/>
+        <path d="M266 222 Q278 214 288 221" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none"/>
+        <path d="M312 221 Q322 214 334 222" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none"/>
+        <!-- Nariz -->
+        <ellipse cx="300" cy="248" rx="13" ry="9.5" fill="#f6bfa9" stroke="#b87b69" stroke-width="2.5"/>
+
+        <!-- Barba blanca esponjosa y bigote -->
+        <path d="M236 252 C214 274, 218 326, 256 344 C276 354, 324 354, 344 344 C382 326, 386 274, 364 252 C352 276, 324 282, 300 278 C276 282, 248 276, 236 252 Z" fill="#ffffff" stroke="#d8b8c8" stroke-width="3.2" stroke-linejoin="round"/>
+        <!-- Bigote blanco -->
+        <path d="M300 258 C282 254, 260 264, 264 278 C276 276, 290 270, 300 264 C310 270, 324 276, 336 278 C340 264, 318 254, 300 258 Z" fill="#ffffff" stroke="#d8b8c8" stroke-width="2.5"/>
+        <!-- Sonrisa -->
+        <path d="M292 278 Q300 286 308 278" stroke="#c0567a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+
+        <!-- Gorro rosa caído con lunares blancos y pompón -->
+        <path d="M234 206 C238 134, 312 96, 384 128 C444 155, 466 226, 444 268 C432 252, 416 238, 404 218 C388 182, 338 156, 292 174 C264 185, 248 196, 234 206 Z" fill="#f49ac1" stroke="#b85682" stroke-width="3.8" stroke-linejoin="round"/>
+        <!-- Lunares en el gorro -->
+        <circle cx="288" cy="144" r="8" fill="#ffffff" opacity="0.92"/>
+        <circle cx="332" cy="132" r="9" fill="#ffffff" opacity="0.92"/>
+        <circle cx="374" cy="148" r="7" fill="#ffffff" opacity="0.92"/>
+        <circle cx="412" cy="184" r="6.5" fill="#ffffff" opacity="0.92"/>
+        <!-- Borde blanco del gorro -->
+        <rect x="224" y="196" width="152" height="24" rx="12" fill="#ffffff" stroke="#d488ab" stroke-width="3"/>
+        <!-- Pompón blanco en la punta del gorro -->
+        <circle cx="446" cy="272" r="18" fill="#ffffff" stroke="#d488ab" stroke-width="3.2"/>
+      </g>
+    </svg>
+  </div>
+
   <div class="holiday-bg-layer" id="holiday-bg-layer" aria-hidden="true"></div>
   <div class="holiday-lights-bar" id="holiday-lights-bar" aria-hidden="true"></div>
 
@@ -373,8 +530,6 @@
     <div class="promo-main">✦ ENVÍOS A TODO MÉXICO · ENVÍO GRATIS DESDE $1,999 MXN ✦</div>
     <div class="promo-sub">BELLEZA HASTA TU PUERTA · TU PRÓXIMO FAVORITO TE ESPERA · PEDIDOS ABIERTOS 24/7</div>
   </div>
-
-  <div class="bg-glow"></div>
 
   <!-- MENÚ LATERAL -->
   <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
