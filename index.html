@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { overflow-x: hidden; }
     body {
       font-family: 'Playfair Display', Georgia, serif;
       background-color: #fdfbf7; color: #2c2c2c;
@@ -45,7 +46,6 @@
     .logo-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; transform: scale(1.5); }
     .bg-glow { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; background: radial-gradient(circle at center, rgba(255,182,193,0.25) 0%, rgba(253,251,247,1) 75%); }
     main, .section-view, .product-detail-view, .auth-container, .admin-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; max-width: 42rem; z-index: 10; text-align: center; margin: 0 auto; }
-    .section-view { content-visibility: auto; contain-intrinsic-size: auto 600px; }
     .hidden { display: none !important; }
     h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem; color: #111827; }
     .subtitle { font-family: system-ui, -apple-system, sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.25em; color: #db2777; margin-bottom: 1.25rem; font-weight: 600; }
@@ -153,7 +153,7 @@
     .btn-instagram, .btn-tiktok { background-color: #ffffff; border: 1px solid #f472b6; color: #1f2937; }
     .btn-back { background-color: #374151; color: #ffffff; margin-top: 1.5rem; margin-bottom: 2rem; border: none; }
     .products-container { width: 100%; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; text-align: left; font-family: system-ui, -apple-system, sans-serif; }
-    .product-card { background: #ffffff; border: 1px solid #fbcfe8; border-radius: 1rem; padding: 0.75rem; box-shadow: 0 4px 10px rgba(236,72,153,0.06); display: flex; flex-direction: column; justify-content: space-between; gap: 0.5rem; cursor: pointer; position: relative; content-visibility: auto; contain-intrinsic-size: auto 260px; }
+    .product-card { background: #ffffff; border: 1px solid #fbcfe8; border-radius: 1rem; padding: 0.75rem; box-shadow: 0 4px 10px rgba(236,72,153,0.06); display: flex; flex-direction: column; justify-content: space-between; gap: 0.5rem; cursor: pointer; position: relative; }
     .product-card-top { display: flex; flex-direction: column; gap: 0.4rem; }
     .product-card-bottom { display: flex; flex-direction: column; gap: 0.4rem; margin-top: auto; }
     .product-img { width: 100%; height: 130px; object-fit: contain; background-color: #fffdfd; border-radius: 0.5rem; border: 1px solid #f3e8ff; padding: 0.25rem; }
@@ -552,7 +552,7 @@
   </div>
 
   <!-- CONTENEDOR DINÁMICO DE SECCIONES DE MARCAS -->
-  <div id="dynamic-sections-container"></div>
+  <div id="dynamic-sections-container" style="width:100%;"></div>
 
   <footer>© GlamWar Maquillaje</footer>
 
@@ -756,16 +756,17 @@
     function navigateToView(viewName, param = null) {
       const hashStr = param ? `#${viewName}-${param}` : `#${viewName}`;
       if (window.location.hash !== hashStr) {
-        history.pushState({ view: viewName, param: param }, '', hashStr);
+        try { history.pushState({ view: viewName, param: param }, '', hashStr); }
+        catch (e) { window.location.hash = hashStr; }
       }
       renderViewByState(viewName, param, true);
     }
 
     function parseUrlHashAndRender() {
-      const hash = window.location.hash;
+      const hash = window.location.hash || '';
       if (hash.startsWith('#detail-')) {
         const prodId = hash.replace('#detail-', '');
-        history.replaceState({ view: 'home', param: null }, '', '#home');
+        renderViewByState('home', null, false);
         if (cachedProdsMem.length > 0) {
           openProductDetailById(prodId);
         }
@@ -808,7 +809,16 @@
         else document.getElementById('home-view').classList.remove('hidden');
       } else if (viewName === 'detail') document.getElementById('product-detail-view').classList.remove('hidden');
       else if (viewName === 'cart') { document.getElementById('cart-view').classList.remove('hidden'); updateCartUI(); }
-      else if (viewName === 'admin') { document.getElementById('admin-view').classList.remove('hidden'); loadAdminData(); }
+      else if (viewName === 'admin') {
+        document.getElementById('admin-view').classList.remove('hidden');
+        if (currentUserRole === 'admin') {
+          loadAdminData();
+        } else {
+          syncSessionAndProfile(true).then((info) => {
+            if (info && info.role === 'admin') loadAdminData(true);
+          });
+        }
+      }
       if (isNewState) window.scrollTo(0, 0);
     }
 
@@ -834,7 +844,7 @@
     function updateUserAuthUI(name, role = "cliente", isLoggedIn = false) {
       currentUserRole = role;
       currentSessionUser = isLoggedIn ? name : null;
-      localStorage.setItem("glamwar_active_user", isLoggedIn ? name : "Invitado");
+      try { localStorage.setItem("glamwar_active_user", isLoggedIn ? name : "Invitado"); } catch (e) {}
 
       document.getElementById('sidebar-user-name').textContent = isLoggedIn
         ? name + (role === "admin" ? " (Admin)" : "")
@@ -1591,7 +1601,7 @@
 
         card.innerHTML = `
           <div class="product-card-top">
-            <img src="${escapeHTML(firstAvailableImg)}" alt="${escapeHTML(p.nombre)}" class="product-img" loading="lazy" decoding="async">
+            <img src="${escapeHTML(firstAvailableImg)}" alt="${escapeHTML(p.nombre)}" class="product-img" loading="eager" decoding="async">
             <div class="product-header">
               <div class="product-title">${escapeHTML(p.nombre)}</div>
               <div class="product-price">$${Number(p.precio || 0).toFixed(2)}</div>
@@ -1760,7 +1770,7 @@
           const pVariants = variantsByProductMap.get(String(p.id)) || [];
           const variantsHtml = pVariants.map(v => {
             const currentImgs = Array.isArray(v.imagenes) && v.imagenes.length ? v.imagenes : (p.imagenes || []);
-            const imgsPreviews = currentImgs.map(img => `<img src="${escapeHTML(img)}" alt="preview" loading="lazy" decoding="async">`).join('');
+            const imgsPreviews = currentImgs.map(img => `<img src="${escapeHTML(img)}" alt="preview" loading="eager" decoding="async">`).join('');
 
             return `
               <div class="shade-admin-box">
@@ -2084,7 +2094,7 @@
       if (matches.length > 0) {
         suggestionsBox.innerHTML = matches.slice(0, 20).map(item => `
           <div class="suggestion-item" onclick="selectSearchProduct('${escapeHTML(item.productId)}', '${escapeHTML(item.variantId || '')}')">
-            <img src="${escapeHTML(item.thumb)}" alt="${escapeHTML(item.name)}" class="suggestion-thumb" loading="lazy" decoding="async">
+            <img src="${escapeHTML(item.thumb)}" alt="${escapeHTML(item.name)}" class="suggestion-thumb" loading="eager" decoding="async">
             <div class="suggestion-details">
               <div class="suggestion-title-row">
                 <span class="suggestion-brand-bold">${escapeHTML(item.brand)}</span>
@@ -2139,6 +2149,10 @@
       loadCart('Invitado');
       restoreCatalogFromLocalCache();
 
+      if (initialHash) {
+        parseUrlHashAndRender();
+      }
+
       if (gwSupabaseConfigured()) {
         try {
           const sb = gwRequireSupabase();
@@ -2157,23 +2171,20 @@
             }
           });
 
-          const [sessionRes] = await Promise.all([
-            sb.auth.getSession(),
-            ensureCatalogLoaded()
-          ]);
-
-          const session = sessionRes.data?.session;
+          await ensureCatalogLoaded();
+          const { data } = await sb.auth.getSession();
+          const session = data?.session;
           if (session?.user) {
             const { role, name } = await resolveUserProfile(sb, session.user);
             updateUserAuthUI(name, role, true);
-            loadCart(userNameOr(name));
-            if (role === 'admin') await loadAdminData();
+            loadCart(name);
+            if (role === 'admin' && !document.getElementById('admin-view').classList.contains('hidden')) {
+              await loadAdminData(true);
+            }
           }
 
           if (initialHash && initialHash.startsWith('#detail-')) {
             const prodId = initialHash.replace('#detail-', '');
-            history.replaceState({ view: 'home', param: null }, '', '#home');
-            renderViewByState('home', null, false);
             await openProductDetailById(prodId);
           } else if (initialHash) {
             parseUrlHashAndRender();
@@ -2181,10 +2192,6 @@
         } catch (e) {}
       }
     });
-
-    function userNameOr(val) {
-      return val || 'Invitado';
-    }
   </script>
 </body>
 </html>
